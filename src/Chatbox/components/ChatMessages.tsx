@@ -1,0 +1,38 @@
+import { ScrollArea } from '~/components/ui/scroll-area'
+import { Lightbulb } from 'lucide-react'
+import { ChatMessageItem } from './ChatMessageItem'
+import type { Message } from '../types/chatTypes'
+
+interface Props {
+  messages: Message[]
+  scrollRef: React.RefObject<HTMLDivElement>
+}
+
+export function ChatMessages({ messages, scrollRef }: Props) {
+  if (messages.length === 0) {
+    return (
+      <div className='h-full flex items-center justify-center text-center py-20'>
+        <div className='max-w-md space-y-4'>
+          <div className='inline-flex p-5 bg-muted rounded-2xl shadow-sm'>
+            <Lightbulb className='h-14 w-14 text-primary' />
+          </div>
+          <div>
+            <p className='text-xl font-bold text-foreground mb-2'>Start a conversation</p>
+            <p className='text-sm text-muted-foreground leading-relaxed'>
+              Send a message to begin chatting with your AI assistant
+            </p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className='space-y-6 overflow-x-hidden max-w-full'>
+      {messages.map((msg, idx) => (
+        <ChatMessageItem key={idx} message={msg} />
+      ))}
+      <div ref={scrollRef} />
+    </div>
+  )
+}
