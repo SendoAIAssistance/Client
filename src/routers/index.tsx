@@ -2,6 +2,7 @@ import { createBrowserRouter } from 'react-router-dom'
 import ChatBox from '~/Chatbox/ChatBox'
 import Login from '~/Login/pages/Login'
 import OAuthCallback from '~/Login/pages/OAuthCallback'
+import TrainingBot from '~/TrainingAI/TrainingBot'
 
 export const router = createBrowserRouter([
   {
@@ -15,5 +16,9 @@ export const router = createBrowserRouter([
   {
     path: 'chat-support',
     element: <ChatBox />
+  },
+  {
+    path: 'training-ai',
+    element: <TrainingBot />
   }
 ])
