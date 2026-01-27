@@ -51,7 +51,9 @@ export function ChatMessageItem({ message }: Props) {
             </div>
           ) : (
             <p className='text-sm leading-relaxed whitespace-pre-wrap wrap-break-word'>
-              {message.message || 'Sorry, something went wrong. Please try again.'}
+              {message.status === 'ERROR'
+                ? message.message || 'Tuy nhiên hệ thống đang gặp lỗi, hãy liên hệ cố vấn kĩ thuật để sửa chữa'
+                : message.message}
             </p>
           )}
         </div>
