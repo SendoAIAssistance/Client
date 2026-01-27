@@ -55,3 +55,42 @@ apiClient.interceptors.response.use(
     })
   }
 )
+
+/**
+ * Helper function để tạo streaming request sử dụng config từ apiClient
+ * Axios không hỗ trợ streaming response tốt trong browser, nên sử dụng fetch với config từ axios
+ */
+export async function createStreamingRequest(url: string, data: any): Promise<Response> {
+  // Lấy token từ localStorage (giống như interceptor)
+  const token = localStorage.getItem('token')
+
+  // Tạo headers từ apiClient defaults
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...(apiClient.defaults.headers.common as Record<string, string>)
+  }
+
+  // Thêm Authorization header nếu có token
+  if (token) {
+    headers.Authorization = `Bearer ${token}`
+  }
+
+  // Xây dựng full URL
+  const baseURL = apiClient.defaults.baseURL || ''
+  const fullUrl = baseURL ? `${baseURL}${url}` : url
+
+  // Sử dụng fetch cho streaming response với config từ apiClient
+  const response = await fetch(fullUrl, {
+    method: 'POST',
+    headers,
+    credentials: apiClient.defaults.withCredentials ? 'include' : 'same-origin',
+    body: JSON.stringify(data)
+  })
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: 'Request failed' }))
+    throw error
+  }
+
+  return response
+}

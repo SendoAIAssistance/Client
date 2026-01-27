@@ -16,7 +16,7 @@ export function ChatMessageItem({ message }: Props) {
       <div className='flex justify-end gap-3 animate-in fade-in slide-in-from-Lightbulb tom-2 duration-300'>
         <div className='flex flex-col items-end gap-1.5 max-w-full overflow-x-hidden'>
           <div className='bg-primary text-primary-foreground rounded-2xl rounded-tr-md px-4 py-3 shadow-md border border-primary/30'>
-            <p className='text-sm leading-relaxed font-medium wrap-break-words'>{message.userMessage}</p>
+            <p className='text-sm leading-relaxed font-medium wrap-break-words'>{message.message}</p>
           </div>
           <div className='flex items-center gap-1.5 px-2'>
             <User className='h-3 w-3 text-muted-foreground' />
@@ -44,19 +44,19 @@ export function ChatMessageItem({ message }: Props) {
               : 'bg-muted text-foreground border-muted/50'
           )}
         >
-          {message.status === 'IN_PROGRESS' && !message.chatMessage ? (
+          {message.status === 'IN_PROGRESS' && !message.message ? (
             <div className='flex items-center gap-2.5 py-1'>
               <Loader2 className='h-4 w-4 animate-spin text-primary' />
               <span className='text-sm font-semibold text-muted-foreground'>Thinking...</span>
             </div>
           ) : (
             <p className='text-sm leading-relaxed whitespace-pre-wrap wrap-break-word'>
-              {message.chatMessage || 'Sorry, something went wrong. Please try again.'}
+              {message.message || 'Sorry, something went wrong. Please try again.'}
             </p>
           )}
         </div>
         <div className='flex items-center gap-2 px-2'>
-          {message.status === 'IN_PROGRESS' && message.chatMessage && (
+          {message.status === 'IN_PROGRESS' && message.message && (
             <>
               <Loader2 className='h-3 w-3 animate-spin text-primary' />
               <span className='text-xs text-primary font-bold'>typing...</span>

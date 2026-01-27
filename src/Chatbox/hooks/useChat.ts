@@ -1,5 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { type Message } from '~/Chatbox/types/chatTypes'
+import { createStreamingRequest } from '~/lib/apiClient'
+import { endPoints } from '~/lib/endPoints'
 
 export function useChat() {
   const [messages, setMessages] = useState<Message[]>([])
@@ -19,7 +21,7 @@ export function useChat() {
 
     const userMessage: Message = {
       conversationId,
-      userMessage: userInput,
+      message: userInput,
       status: 'PENDING',
       created_at: new Date(),
       updated_at: new Date(),
@@ -33,8 +35,7 @@ export function useChat() {
     try {
       const aiMessage: Message = {
         conversationId,
-        userMessage: userInput,
-        chatMessage: '',
+        message: '',
         status: 'IN_PROGRESS',
         created_at: new Date(),
         updated_at: new Date(),
@@ -43,13 +44,11 @@ export function useChat() {
 
       setMessages((prev) => [...prev, aiMessage])
 
-      const response = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ conversationId, userMessage: userInput })
+      // Sử dụng createStreamingRequest từ apiClient
+      const response = await createStreamingRequest(endPoints.chat.sendMessage, {
+        conversationId,
+        userMessage: userInput
       })
-
-      if (!response.ok) throw new Error('Failed to get AI response')
 
       const reader = response.body?.getReader()
       const decoder = new TextDecoder()
@@ -67,7 +66,7 @@ export function useChat() {
           const updated = [...prev]
           const last = updated[updated.length - 1]
           if (last?.isAI) {
-            last.chatMessage = fullResponse
+            last.message = fullResponse
             last.updated_at = new Date()
           }
           return updated
@@ -89,7 +88,7 @@ export function useChat() {
         const updated = [...prev]
         const last = updated[updated.length - 1]
         if (last?.isAI) {
-          last.chatMessage = 'Sorry, something went wrong. Please try again.'
+          last.message = 'Sorry, something went wrong. Please try again.'
           last.status = 'ERROR'
           last.updated_at = new Date()
         }
