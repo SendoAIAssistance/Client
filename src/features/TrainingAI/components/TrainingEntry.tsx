@@ -19,10 +19,10 @@ export default function TrainingEntry({ type, content, onChange }: TrainingEntry
         placeholder={type === 'issue' ? 'Issue...' : 'Solution...'}
         rows={type === 'issue' ? 5 : 15}
         aria-invalid={type === 'issue'}
-        className='resize-y bg-primary-foreground'
+        className={`resize-y bg-primary-foreground ${type === 'issue' ? 'min-h-15' : 'min-h-30'}`}
       />
 
-      <FieldDescription className='text-muted-foreground text-sm'>
+      <FieldDescription className='text-muted-foreground text-sm flex justify-start'>
         {type === 'issue' ? 'Briefly describe the issue.' : 'Show how to resolve the issue to help the AI improve.'}
       </FieldDescription>
     </Field>

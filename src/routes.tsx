@@ -1,10 +1,10 @@
 import { createBrowserRouter } from 'react-router-dom'
-import ChatBox from '~/Chatbox/ChatBox'
-import Login from '~/Login/pages/Login'
-import OAuthCallback from '~/Login/pages/OAuthCallback'
-import TrainingBot from '~/TrainingAI/TrainingBot'
+import ChatBox from '~/features/ChatBox/ChatBox'
+import Login from '~/features/Login/pages/Login'
+import OAuthCallback from '~/features/Login/pages/OAuthCallback'
+import TrainingBot from '~/features/TrainingAI/TrainingBot'
 
-export const router = createBrowserRouter([
+export const routes = createBrowserRouter([
   {
     path: '/',
     element: <Login />

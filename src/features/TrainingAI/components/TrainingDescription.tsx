@@ -1,5 +1,5 @@
-import React, { useState } from 'react'
-import { Field, FieldDescription, FieldLabel } from '~/components/ui/field'
+import React from 'react'
+import { Field, FieldLabel } from '~/components/ui/field'
 import { Input } from '~/components/ui/input'
 import type { TrainingDescriptionProps } from '../types/types'
 

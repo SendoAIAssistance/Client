@@ -12,7 +12,7 @@ export default function TrainingBot() {
     setIssues(value)
   }
   return (
-    <div className='container min-h-screen'>
+    <div className='container mx-auto min-h-screen'>
       <form>
         <FieldSet>
           <FieldLegend className='text-primary font-bold text-4xl!'>TRAINING AI SECTION</FieldLegend>

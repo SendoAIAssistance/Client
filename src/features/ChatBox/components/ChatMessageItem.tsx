@@ -1,4 +1,4 @@
-import { Loader2, Lightbulb, User, CheckCheck, XCircle } from 'lucide-react'
+import { CheckCheck, Lightbulb, Loader2, User, XCircle } from 'lucide-react'
 import type { Message } from '../types/chatTypes'
 import { formatTime } from '../utils/formatTime'
 import { cn } from '~/lib/utils'

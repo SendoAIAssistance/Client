@@ -180,7 +180,10 @@
     --tracking-widest: calc(var(--tracking-normal) + 0.1em);
   }
 
+  * {
+    @apply border-border outline-ring/50;
+  }
   body {
-    letter-spacing: var(--tracking-normal);
+    @apply bg-background text-foreground;
   }
 }

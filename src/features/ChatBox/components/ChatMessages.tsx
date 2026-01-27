@@ -1,7 +1,6 @@
-import { ScrollArea } from '~/components/ui/scroll-area'
 import { Lightbulb } from 'lucide-react'
-import { ChatMessageItem } from './ChatMessageItem'
 import type { Message } from '../types/chatTypes'
+import { ChatMessageItem } from './ChatMessageItem'
 
 interface Props {
   messages: Message[]

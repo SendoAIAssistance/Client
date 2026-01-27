@@ -1,6 +1,6 @@
-import { Input } from '~/components/ui/input'
+import { Loader2, Send } from 'lucide-react'
 import { Button } from '~/components/ui/button'
-import { Send, Loader2 } from 'lucide-react'
+import { Input } from '~/components/ui/input'
 
 interface Props {
   inputValue: string
