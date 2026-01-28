@@ -1,16 +1,7 @@
 import React, { createContext, useCallback, useContext, useEffect, useState } from 'react'
-import type { User } from '../types/types'
+import type { AuthContextType, User } from '../types/types'
 import { apiClient } from '~/lib/apiClient'
 import { endPoints } from '~/lib/endPoints'
-
-interface AuthContextType {
-  user: User | null
-  accessToken: string | null
-  login: (token: string, userData: User) => void
-  logout: () => void
-  loading: boolean
-  verifyUser: () => Promise<void>
-}
 
 const authContext = createContext<AuthContextType | undefined>(undefined)
 
