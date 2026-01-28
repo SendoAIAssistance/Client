@@ -12,29 +12,27 @@ export function useChat() {
 
   // === INIT: Load/create daily conversationId + messages + cleanup old data ===
   useEffect(() => {
-    const today = new Date().toISOString().split('T')[0] // '2026-01-28'
+    const today = new Date().toISOString().split('T')[0] // 'YYYY-MM-DD'
 
     let convId = ''
     let initialMessages: Message[] = []
 
-    // Kiểm tra có dữ liệu daily cũ không
     const storedDaily = localStorage.getItem('dailyConversation')
     if (storedDaily) {
       try {
         const parsed = JSON.parse(storedDaily)
         if (parsed.date === today && parsed.id) {
-          // Cùng ngày → reuse id + load messages cũ
+          // Cùng ngày → reuse id cũ + load messages
           convId = parsed.id
           const storedMsgs = localStorage.getItem(`messages-${convId}`)
           if (storedMsgs) {
             initialMessages = JSON.parse(storedMsgs)
           }
         } else {
-          // Ngày mới → cleanup messages của id cũ trước khi tạo mới
+          // Ngày mới → cleanup messages của id cũ
           if (parsed.id) {
             localStorage.removeItem(`messages-${parsed.id}`)
           }
-          // Xóa luôn key daily cũ (sẽ overwrite ngay sau)
           localStorage.removeItem('dailyConversation')
         }
       } catch (e) {
@@ -43,25 +41,24 @@ export function useChat() {
       }
     }
 
-    // Nếu chưa có id (ngày mới hoặc lần đầu) → tạo mới
+    // Tạo id mới nếu chưa có (ngày mới hoặc lần đầu)
     if (!convId) {
-      convId = `conv-${Date.now()}` // vẫn unique để tránh conflict nếu cần
+      convId = `conv-${Date.now()}`
       localStorage.setItem('dailyConversation', JSON.stringify({ date: today, id: convId }))
     }
 
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setConversationId(convId)
     setMessages(initialMessages)
   }, [])
 
-  // === Persist messages mới mỗi khi thay đổi ===
+  // === Persist messages mỗi khi thay đổi ===
   useEffect(() => {
     if (conversationId) {
       localStorage.setItem(`messages-${conversationId}`, JSON.stringify(messages))
     }
   }, [messages, conversationId])
 
-  // Auto scroll
+  // === Auto scroll ===
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollIntoView({ behavior: 'smooth' })
@@ -84,8 +81,107 @@ export function useChat() {
     setInputValue('')
     setIsLoading(true)
 
-    // Phần try/catch + streaming giữ nguyên như version trước mình đã sửa (không finally hacky)
-    // ... (copy phần sendMessage đã sửa ở tin nhắn trước)
+    try {
+      const aiMessage: Message = {
+        conversationId,
+        message: '',
+        status: 'IN_PROGRESS',
+        created_at: new Date(),
+        updated_at: new Date(),
+        isAI: true
+      }
+
+      setMessages((prev) => [...prev, aiMessage])
+
+      const response = await createStreamingRequest(endPoints.chat.sendMessage, {
+        conversationId,
+        userMessage: userInput
+      })
+
+      const reader = response.body?.getReader()
+      const decoder = new TextDecoder()
+      if (!reader) throw new Error('No response body')
+
+      let fullResponse = ''
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+
+        const chunk = decoder.decode(value, { stream: true })
+        fullResponse += chunk
+
+        setMessages((prev) => {
+          const updated = [...prev]
+          const last = updated[updated.length - 1]
+          if (last?.isAI) {
+            last.message = fullResponse
+            last.updated_at = new Date()
+          }
+          return updated
+        })
+      }
+
+      // DONE - NORMAL CASE
+      setMessages((prev) => {
+        const updated = [...prev]
+        const last = updated[updated.length - 1]
+        if (last?.isAI) {
+          last.status = 'COMPLETED'
+          last.updated_at = new Date()
+        }
+        return updated
+      })
+
+      setIsLoading(false)
+    } catch {
+      // ERROR CASE
+      const errorMessage = 'Hệ thống không nhận được câu trả lời, hãy liên hệ cố vấn kĩ thuật'
+
+      // Reset AI message để typing error
+      setMessages((prev) => {
+        const updated = [...prev]
+        const last = updated[updated.length - 1]
+        if (last?.isAI) {
+          last.status = 'IN_PROGRESS'
+          last.message = ''
+        }
+        return updated
+      })
+
+      let currentIndex = 0
+      const streamError = () => {
+        if (currentIndex < errorMessage.length) {
+          const chunk = errorMessage.slice(0, currentIndex + 1)
+          currentIndex++
+
+          setMessages((prev) => {
+            const updated = [...prev]
+            const last = updated[updated.length - 1]
+            if (last?.isAI) {
+              last.message = chunk
+              last.updated_at = new Date()
+            }
+            return updated
+          })
+
+          setTimeout(streamError, 30)
+        } else {
+          // DONE typing error
+          setMessages((prev) => {
+            const updated = [...prev]
+            const last = updated[updated.length - 1]
+            if (last?.isAI) {
+              last.status = 'ERROR'
+              last.updated_at = new Date()
+            }
+            return updated
+          })
+          setIsLoading(false)
+        }
+      }
+
+      setTimeout(streamError, 100)
+    }
   }
 
   return {
