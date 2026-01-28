@@ -1,6 +1,5 @@
 import { Lightbulb } from 'lucide-react'
 import { CardHeader } from '~/components/ui/card'
-import ModeToggle from '~/components/ui/mode-toggle'
 
 export function ChatHeader() {
   return (
@@ -12,9 +11,6 @@ export function ChatHeader() {
         <div>
           <h1 className='text-xl font-bold tracking-tight'>AI Assistant</h1>
           <p className='text-sm opacity-90 font-medium'>Always here to help you</p>
-        </div>
-        <div className='ml-auto'>
-          <ModeToggle />
         </div>
       </div>
     </CardHeader>

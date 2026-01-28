@@ -25,7 +25,7 @@ const ModeToggle = () => {
       >
         <MoonIcon
           size={18}
-          className={`transition-colors ${!isLight ? 'text-secondary' : 'text-primary-foreground/50 hover:text-primary-foreground'}`}
+          className={`transition-colors ${!isLight ? 'text-primary' : 'text-secondary-foreground/50 hover:text-primary-foreground'}`}
         />
       </button>
 
@@ -34,7 +34,7 @@ const ModeToggle = () => {
         id={id}
         checked={isLight}
         onCheckedChange={toggleSwitch}
-        className='data-[state=checked]:bg-primary-foreground/40 data-[state=unchecked]:bg-input [&_span]:bg-background'
+        className='data-[state=checked]:bg-accent-foreground/40 data-[state=unchecked]:bg-accent [&_span]:bg-background'
         aria-label='Toggle between light and dark mode'
       />
 
@@ -48,7 +48,7 @@ const ModeToggle = () => {
       >
         <SunIcon
           size={18}
-          className={`transition-colors ${isLight ? 'text-orange-500' : 'text-primary-foreground/50 hover:text-primary-foreground'}`}
+          className={`transition-colors ${isLight ? 'text-orange-500' : 'text-secondary-foreground/50 hover:text-primary-foreground'}`}
         />
       </button>
     </div>
