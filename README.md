@@ -73,7 +73,6 @@ src/
 - `Chatbox/`: Các thành phần và logic cho tính năng chat.
 - `components/ui/`: Các component UI tái sử dụng.
 - `contexts/`: Context API (ví dụ: UserContext).
-- `DarkMode/`: Chế độ tối.
 - `lib/`: Các hàm tiện ích, API client.
 - `Login/pages/`: Trang đăng nhập, xác thực OAuth.
 - `routers/`: Định tuyến ứng dụng.
