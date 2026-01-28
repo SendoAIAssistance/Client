@@ -1,30 +1,196 @@
-import { Card, CardContent } from '~/components/ui/card'
-import { useChat } from './hooks/useChat'
-import { ChatHeader } from './components/ChatHeader'
-import { ScrollArea } from '~/components/ui/scroll-area'
-import { ChatMessages } from './components/ChatMessages'
-import { ChatInput } from './components/ChatInput'
+import { useState, useRef, useEffect } from 'react'
+import { createStreamingRequest } from '~/lib/apiClient'
+import { endPoints } from '~/lib/endPoints'
+import type { Message } from './types/chatTypes'
 
-export default function ChatBox() {
-  const { messages, inputValue, setInputValue, isLoading, sendMessage, scrollRef } = useChat()
+export function useChat() {
+  const [messages, setMessages] = useState<Message[]>([])
+  const [inputValue, setInputValue] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
+  const [conversationId, setConversationId] = useState<string>('')
+  const scrollRef = useRef<HTMLDivElement>(null)
 
-  const handleSend = () => {
-    sendMessage(inputValue)
+  // === INIT: Load/create daily conversationId + messages + cleanup old data ===
+  useEffect(() => {
+    const today = new Date().toISOString().split('T')[0] // 'YYYY-MM-DD'
+
+    let convId = ''
+    let initialMessages: Message[] = []
+
+    const storedDaily = localStorage.getItem('dailyConversation')
+    if (storedDaily) {
+      try {
+        const parsed = JSON.parse(storedDaily)
+        if (parsed.date === today && parsed.id) {
+          // Cùng ngày → reuse id cũ + load messages
+          convId = parsed.id
+          const storedMsgs = localStorage.getItem(`messages-${convId}`)
+          if (storedMsgs) {
+            initialMessages = JSON.parse(storedMsgs)
+          }
+        } else {
+          // Ngày mới → cleanup messages của id cũ
+          if (parsed.id) {
+            localStorage.removeItem(`messages-${parsed.id}`)
+          }
+          localStorage.removeItem('dailyConversation')
+        }
+      } catch (e) {
+        console.error('Error parsing daily conversation', e)
+        localStorage.removeItem('dailyConversation')
+      }
+    }
+
+    // Tạo id mới nếu chưa có (ngày mới hoặc lần đầu)
+    if (!convId) {
+      convId = `conv-${Date.now()}`
+      localStorage.setItem('dailyConversation', JSON.stringify({ date: today, id: convId }))
+    }
+
+    setConversationId(convId)
+    setMessages(initialMessages)
+  }, [])
+
+  // === Persist messages mỗi khi thay đổi ===
+  useEffect(() => {
+    if (conversationId) {
+      localStorage.setItem(`messages-${conversationId}`, JSON.stringify(messages))
+    }
+  }, [messages, conversationId])
+
+  // === Auto scroll ===
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollIntoView({ behavior: 'smooth' })
+    }
+  }, [messages])
+
+  const sendMessage = async (userInput: string) => {
+    if (!userInput.trim() || !conversationId) return
+
+    const userMessage: Message = {
+      conversationId,
+      message: userInput,
+      status: 'PENDING',
+      created_at: new Date(),
+      updated_at: new Date(),
+      isAI: false
+    }
+
+    setMessages((prev) => [...prev, userMessage])
+    setInputValue('')
+    setIsLoading(true)
+
+    try {
+      const aiMessage: Message = {
+        conversationId,
+        message: '',
+        status: 'IN_PROGRESS',
+        created_at: new Date(),
+        updated_at: new Date(),
+        isAI: true
+      }
+
+      setMessages((prev) => [...prev, aiMessage])
+
+      const response = await createStreamingRequest(endPoints.chat.sendMessage, {
+        conversationId,
+        userMessage: userInput
+      })
+
+      const reader = response.body?.getReader()
+      const decoder = new TextDecoder()
+      if (!reader) throw new Error('No response body')
+
+      let fullResponse = ''
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+
+        const chunk = decoder.decode(value, { stream: true })
+        fullResponse += chunk
+
+        setMessages((prev) => {
+          const updated = [...prev]
+          const last = updated[updated.length - 1]
+          if (last?.isAI) {
+            last.message = fullResponse
+            last.updated_at = new Date()
+          }
+          return updated
+        })
+      }
+
+      // DONE - NORMAL CASE
+      setMessages((prev) => {
+        const updated = [...prev]
+        const last = updated[updated.length - 1]
+        if (last?.isAI) {
+          last.status = 'COMPLETED'
+          last.updated_at = new Date()
+        }
+        return updated
+      })
+
+      setIsLoading(false)
+    } catch {
+      // ERROR CASE
+      const errorMessage = 'Hệ thống không nhận được câu trả lời, hãy liên hệ cố vấn kĩ thuật'
+
+      // Reset AI message để typing error
+      setMessages((prev) => {
+        const updated = [...prev]
+        const last = updated[updated.length - 1]
+        if (last?.isAI) {
+          last.status = 'IN_PROGRESS'
+          last.message = ''
+        }
+        return updated
+      })
+
+      let currentIndex = 0
+      const streamError = () => {
+        if (currentIndex < errorMessage.length) {
+          const chunk = errorMessage.slice(0, currentIndex + 1)
+          currentIndex++
+
+          setMessages((prev) => {
+            const updated = [...prev]
+            const last = updated[updated.length - 1]
+            if (last?.isAI) {
+              last.message = chunk
+              last.updated_at = new Date()
+            }
+            return updated
+          })
+
+          setTimeout(streamError, 30)
+        } else {
+          // DONE typing error
+          setMessages((prev) => {
+            const updated = [...prev]
+            const last = updated[updated.length - 1]
+            if (last?.isAI) {
+              last.status = 'ERROR'
+              last.updated_at = new Date()
+            }
+            return updated
+          })
+          setIsLoading(false)
+        }
+      }
+
+      setTimeout(streamError, 100)
+    }
   }
 
-  return (
-    <div className='min-h-screen bg-background flex items-center justify-center p-4'>
-      <Card className='w-full max-w-2xl min-w-[320px] mx-auto flex flex-col shadow-xl border-2 p-0 h-[calc(100vh-2rem)] max-h-200 overflow-hidden'>
-        <ChatHeader />
-        <CardContent className='flex-1 p-0 overflow-hidden bg-card min-h-0'>
-          <ScrollArea className='h-full'>
-            <div className='px-6 py-6'>
-              <ChatMessages messages={messages} scrollRef={scrollRef as React.RefObject<HTMLDivElement>} />
-            </div>
-          </ScrollArea>
-        </CardContent>
-        <ChatInput inputValue={inputValue} setInputValue={setInputValue} onSend={handleSend} isLoading={isLoading} />
-      </Card>
-    </div>
-  )
+  return {
+    messages,
+    inputValue,
+    setInputValue,
+    isLoading,
+    sendMessage,
+    scrollRef,
+    conversationId
+  }
 }
