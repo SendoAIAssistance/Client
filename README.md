@@ -35,26 +35,39 @@ npm install
 
 ```
 src/
-  App.tsx
-  main.tsx
-  assets/
-  Chatbox/
-    components/
-    hooks/
-    types/
-    utils/
-  components/
-    ui/
-  contexts/
-  DarkMode/
-  lib/
-  Login/
-    pages/
-  routers/
-  TrainingAI/
-    components/
-    types/
-public/
+├── App.tsx                      # Component gốc của ứng dụng
+├── main.tsx                     # Entry point, render React app
+│
+├── assets/                      # Tài nguyên tĩnh (images, fonts, icons)
+│
+├── components/                  # Shared components toàn dự án
+│   ├── ui/                      # shadcn/ui components (button, card, sidebar, etc.)
+│   ├── layouts/                 # Layout components (app-layout, app-sidebar)
+│   └── mode-toggle.tsx          # Dark/Light mode toggle component
+│
+├── contexts/                    # React Context providers
+│   ├── UserContext.tsx          # User authentication context
+│   └── theme-provider.tsx       # Theme (dark/light mode) provider
+│
+├── lib/                         # Utility functions và helpers (utils.ts)
+│
+├── routes/                      # Route configuration (React Router)
+│
+├── features/                    # Feature-based modules
+│   ├── Chatbox/                 # Chat Support feature
+│   │   ├── components/          # Components riêng cho Chatbox
+│   │   ├── hooks/               # Custom hooks cho Chatbox
+│   │   ├── types/               # TypeScript types/interfaces
+│   │   └── utils/               # Utility functions riêng
+│   │
+│   ├── TrainingAI/              # Training AI feature
+│   │   ├── components/          # Components riêng cho Training AI
+│   │   └── types/               # TypeScript types/interfaces
+│   │
+│   └── Login/                   # Authentication feature
+│       └── pages/               # Login pages (Login, OAuthCallback)
+│
+└── public/                      # Static assets served directly
 ```
 
 - `Chatbox/`: Các thành phần và logic cho tính năng chat.
