@@ -14,7 +14,7 @@ export default function ChatBox() {
 
   return (
     <div className='min-h-screen bg-background flex items-center justify-center p-4'>
-      <Card className='w-full max-w-2xl min-w-[320px] mx-auto flex flex-col shadow-xl border-2 p-0 h-[calc(100vh-2rem)] max-h-[800px]'>
+      <Card className='w-full max-w-2xl min-w-[320px] mx-auto flex flex-col shadow-xl border-2 p-0 h-[calc(100vh-2rem)] max-h-200 overflow-hidden'>
         <ChatHeader />
         <CardContent className='flex-1 p-0 overflow-hidden bg-card min-h-0'>
           <ScrollArea className='h-full'>

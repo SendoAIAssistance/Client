@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { type Message } from '~/Chatbox/types/chatTypes'
+import { type Message } from '~/ChatBox/types/chatTypes'
 import { createStreamingRequest } from '~/lib/apiClient'
 import { endPoints } from '~/lib/endPoints'
 
