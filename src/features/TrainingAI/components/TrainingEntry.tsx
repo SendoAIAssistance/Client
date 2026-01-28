@@ -7,13 +7,16 @@ export default function TrainingEntry({ type, content, onChange }: TrainingEntry
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     onChange(e.target.value)
   }
+  // Đặt id động cho textarea và label
+  const textareaId = type === 'issue' ? 'reason' : 'solution'
   return (
     <Field className='w-full space-y-2' data-invalid={type === 'issue'}>
-      <FieldLabel htmlFor='reason' className={`text-primary text-xl ${type === 'issue' ? 'text-red-600' : ''}`}>
+      <FieldLabel htmlFor={textareaId} className={`text-primary text-xl ${type === 'issue' ? 'text-red-600' : ''}`}>
         {type === 'issue' ? 'Issue' : 'Solution'}
       </FieldLabel>
 
       <Textarea
+        id={textareaId}
         value={content}
         onChange={handleChange}
         placeholder={type === 'issue' ? 'Issue...' : 'Solution...'}
