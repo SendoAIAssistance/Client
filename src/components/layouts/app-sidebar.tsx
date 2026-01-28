@@ -1,5 +1,5 @@
-import { MessageSquare, Brain } from 'lucide-react'
-import { Link, useLocation } from 'react-router-dom'
+import { MessageSquare, Brain, LogOut } from 'lucide-react'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import {
   Sidebar,
   SidebarContent,
@@ -7,10 +7,14 @@ import {
   SidebarGroupContent,
   SidebarGroupLabel,
   SidebarHeader,
+  SidebarFooter,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem
 } from '@/components/ui/sidebar'
+import { apiClient } from '~/lib/apiClient'
+import { endPoints } from '~/lib/endPoints'
+import { useAuth } from '~/app/providers/AuthProvider'
 
 const menuItems = [
   {
@@ -27,6 +31,19 @@ const menuItems = [
 
 export function AppSidebar() {
   const location = useLocation()
+  const { user, logout } = useAuth()
+  const navigate = useNavigate()
+
+  const handleLogout = async () => {
+    try {
+      await apiClient.post(endPoints.auth.logout())
+    } catch {
+      // ignore error; proceed to clear local state
+    } finally {
+      logout()
+      navigate('/')
+    }
+  }
 
   return (
     <Sidebar>
@@ -66,6 +83,28 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+      <SidebarFooter className='border-t px-4 py-3'>
+        <div className='flex items-center justify-between'>
+          <div className='flex items-center gap-3 min-w-0'>
+            <div className='flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-medium'>
+              {user?.name?.charAt(0).toUpperCase() || user?.email?.charAt(0).toUpperCase() || 'U'}
+            </div>
+            <div className='flex flex-col min-w-0'>
+              <span className='text-sm font-medium text-foreground truncate'>
+                {user?.name || user?.email || 'User'}
+              </span>
+              <span className='text-xs text-muted-foreground truncate'>{user?.email || ''}</span>
+            </div>
+          </div>
+          <button
+            onClick={handleLogout}
+            className='flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors'
+            title='Logout'
+          >
+            <LogOut className='h-4 w-4' />
+          </button>
+        </div>
+      </SidebarFooter>
     </Sidebar>
   )
 }

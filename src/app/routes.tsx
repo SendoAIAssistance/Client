@@ -1,9 +1,9 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom'
+import { AppLayout } from '~/components/layouts'
 import ChatBox from '~/features/ChatBox/ChatBox'
 import Login from '~/features/Login/pages/Login'
 import OAuthCallback from '~/features/Login/pages/OAuthCallback'
 import TrainingBot from '~/features/TrainingAI/TrainingBot'
-import { AppLayout } from './components/layouts/app-layout'
 
 export const routes = createBrowserRouter([
   {
