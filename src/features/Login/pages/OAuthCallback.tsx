@@ -6,6 +6,12 @@ import type { User } from '~/app/types/types'
 import { endPoints } from '~/lib/endPoints'
 import { toastUtils } from '~/app/utils/ToastAndNavigate'
 
+const mockUser: User = {
+  id: '1',
+  name: 'Nguyen Van A',
+  email: 'kenn0679@gmail.com'
+}
+
 //oauth2/callback?access_token=xyz&refresh_token=abc
 export default function OAuthCallback() {
   const { user, setUser } = useUser()
@@ -33,14 +39,16 @@ export default function OAuthCallback() {
         localStorage.setItem('access_token', accessToken)
         localStorage.setItem('refresh_token', refreshToken)
 
-        const response = await apiClient.get<User>(endPoints.auth.me)
+        // const response = await apiClient.get<User>(endPoints.auth.me)
 
-        if (response.data) {
-          setUser(response.data)
-          navigate('/home')
-        } else {
-          toastUtils.error(navigate, 'Không thể lấy thông tin người dùng', '/')
-        }
+        // if (response.data) {
+        //   setUser(response.data)
+        //   navigate('/home')
+        // } else {
+        //   toastUtils.error(navigate, 'Không thể lấy thông tin người dùng', '/')
+        // }
+        setUser(mockUser)
+        toastUtils.success(navigate, 'Xác thực thành công!', '/home')
       } catch (err) {
         toastUtils.error(navigate, 'Không thể lấy thông tin người dùng', '/')
         console.error('Error fetching user:', err)
@@ -50,7 +58,8 @@ export default function OAuthCallback() {
     }
 
     handleAuth()
-  }, [params, setUser, user, navigate])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   if (isLoading) {
     return (

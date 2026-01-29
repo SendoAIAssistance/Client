@@ -36,7 +36,7 @@ export function AppSidebar() {
 
   const handleLogout = async () => {
     try {
-      await apiClient.post(endPoints.auth.logout())
+      await apiClient.post(endPoints.auth.logout)
     } catch {
       // ignore error; proceed to clear local state
     } finally {

@@ -35,7 +35,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
 
     try {
       apiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`
-      const res = await apiClient.get(endPoints.auth.me())
+      const res = await apiClient.get(endPoints.auth.me)
       if (res && 'success' in res && res?.data?.user) {
         setUser(res.data.user as User)
       } else {
@@ -65,6 +65,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
 
   const logout = () => {
     localStorage.removeItem('access_token')
+    localStorage.removeItem('refresh_token')
     delete apiClient.defaults.headers.common['Authorization']
     setAccessToken(null)
     setUser(null)
