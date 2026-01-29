@@ -5,6 +5,9 @@ import Login from '~/features/Login/pages/Login'
 import OAuthCallback from '~/features/Login/pages/OAuthCallback'
 import TrainingBot from '~/features/TrainingAI/TrainingBot'
 import { ProtectedRoute } from './ProtectedRoute'
+import Forbidden from '../pages/403_page'
+import NotFound from '../pages/404_page'
+import ServerError from '../pages/500_page'
 
 export const routes = createBrowserRouter([
   {
@@ -36,5 +39,17 @@ export const routes = createBrowserRouter([
         element: <TrainingBot />
       }
     ]
+  },
+  {
+    path: '/403',
+    element: <Forbidden />
+  },
+  {
+    path: '/404',
+    element: <NotFound />
+  },
+  {
+    path: '/500',
+    element: <ServerError />
   }
 ])
