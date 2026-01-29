@@ -1,46 +1,76 @@
 import { useEffect, useState } from 'react'
-import axios from 'axios'
 import { useUser } from '~/contexts/UserContext'
+import { useSearchParams, useNavigate } from 'react-router'
+import { apiClient } from '~/lib/apiClient'
+import type { User } from '~/app/types/types'
+import { endPoints } from '~/lib/endPoints'
+import { toastUtils } from '~/app/utils/ToastAndNavigate'
 
+//oauth2/callback?access_token=xyz&refresh_token=abc
 export default function OAuthCallback() {
   const { user, setUser } = useUser()
-  const [error, setError] = useState('')
+  const [isLoading, setIsLoading] = useState(true)
+  const [params] = useSearchParams()
+  const navigate = useNavigate()
 
   useEffect(() => {
-    if (user) return
-    const urlParams = new URLSearchParams(window.location.search)
-    const code = urlParams.get('code')
+    const handleAuth = async () => {
+      try {
+        if (user) {
+          toastUtils.success(navigate, "You're already logged in.", '/home')
+        }
 
-    if (!code) {
-      setTimeout(() => setError('Không tìm thấy mã code xác thực!'), 0)
-      return
+        const accessToken = params.get('access_token')
+        const refreshToken = params.get('refresh_token')
+
+        if (!accessToken || !refreshToken) {
+          toastUtils.error(navigate, 'Xác thực thất bại: Thiếu token', '/')
+          setIsLoading(false)
+          return
+        }
+
+        // Lưu tokens
+        localStorage.setItem('access_token', accessToken)
+        localStorage.setItem('refresh_token', refreshToken)
+
+        const response = await apiClient.get<User>(endPoints.auth.me)
+
+        if (response.data) {
+          setUser(response.data)
+          navigate('/home')
+        } else {
+          toastUtils.error(navigate, 'Không thể lấy thông tin người dùng', '/')
+        }
+      } catch (err) {
+        toastUtils.error(navigate, 'Không thể lấy thông tin người dùng', '/')
+        console.error('Error fetching user:', err)
+      } finally {
+        setIsLoading(false)
+      }
     }
 
-    axios
-      .post('/api/oauth/google', { code })
-      .then((res) => {
-        const { access_token } = res.data
-        return axios.get('https://www.googleapis.com/oauth2/v1/userinfo?alt=json', {
-          headers: {
-            Authorization: `Bearer ${access_token}`
-          }
-        })
-      })
-      .then((res) => {
-        setUser(res.data)
-      })
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      .catch((err) => {
-        setTimeout(() => setError('Lỗi xác thực hoặc lấy thông tin user!'), 0)
-      })
-  }, [setUser, user])
+    handleAuth()
+  }, [params, setUser, user, navigate])
 
-  if (error) return <div className='text-red-500'>{error}</div>
-  if (!user) return <div>Đang xác thực...</div>
+  if (isLoading) {
+    return (
+      <div className='container mx-auto px-4 flex flex-col items-center justify-center min-h-screen'>
+        <div>Đang xác thực...</div>
+      </div>
+    )
+  }
+
+  if (!user) {
+    return (
+      <div className='container mx-auto px-4 flex flex-col items-center justify-center min-h-screen'>
+        <div>Đang tải...</div>
+      </div>
+    )
+  }
+
   return (
     <div className='container mx-auto px-4 flex flex-col items-center justify-center min-h-screen'>
       <h2 className='mb-2'>Xin chào, {user.name || user.email}</h2>
-      <img src={user.picture} alt='avatar' className='rounded-full w-16 h-16' />
       <p>Email: {user.email}</p>
     </div>
   )

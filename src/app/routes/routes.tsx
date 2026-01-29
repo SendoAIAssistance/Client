@@ -4,6 +4,7 @@ import ChatBox from '~/features/ChatBox/ChatBox'
 import Login from '~/features/Login/pages/Login'
 import OAuthCallback from '~/features/Login/pages/OAuthCallback'
 import TrainingBot from '~/features/TrainingAI/TrainingBot'
+import { ProtectedRoute } from './ProtectedRoute'
 
 export const routes = createBrowserRouter([
   {
@@ -16,7 +17,11 @@ export const routes = createBrowserRouter([
   },
   {
     path: '/home',
-    element: <AppLayout />,
+    element: (
+      <ProtectedRoute>
+        <AppLayout />
+      </ProtectedRoute>
+    ),
     children: [
       {
         index: true,

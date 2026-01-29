@@ -5,7 +5,7 @@ export const endPoints = {
     getMessage: '/api/chat/message'
   },
   auth: {
-    logout: () => '/api/auth/logout',
-    me: () => '/api/auth/me'
+    logout: '/api/auth/logout',
+    me: '/api/auth/me'
   }
 }
