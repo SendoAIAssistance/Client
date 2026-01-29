@@ -1,6 +1,5 @@
 # Yarn
-.yarn/
-.yarnrc.yml
+
 # Logs
 logs
 *.log
@@ -43,5 +42,3 @@ bower_components
 psd
 thumb
 sketch
-
-.yarn/*
