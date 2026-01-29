@@ -17,7 +17,7 @@ function App() {
         <UserContext.Provider value={{ user, setUser }}>
           <Suspense fallback={<div>Loading...</div>}>
             <RouterProvider router={routes} />
-            <Toaster position='top-right' richColors />
+            <Toaster position='top-right' richColors duration={2000} />
           </Suspense>
         </UserContext.Provider>
       </AuthProvider>

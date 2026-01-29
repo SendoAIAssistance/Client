@@ -7,7 +7,7 @@ interface ToastAndNavigateOptions {
   type: ToastType
   message: string
   navigateTo?: string
-  delay?: number // milliseconds, default 1500
+  delay?: number // milliseconds, default 1000
 }
 
 /**
@@ -16,17 +16,17 @@ interface ToastAndNavigateOptions {
  * @param options - { type, message, navigateTo?, delay? }
  */
 export function toastAndNavigate(navigate: NavigateFunction, options: ToastAndNavigateOptions) {
-  const { type, message, navigateTo, delay = 1500 } = options
+  const { type, message, navigateTo, delay = 1000 } = options
 
-  // Hiển thị toast
-  toast[type](message)
-
-  // Navigate nếu có path
+  // Navigate trước
   if (navigateTo) {
-    setTimeout(() => {
-      navigate(navigateTo)
-    }, delay)
+    navigate(navigateTo)
   }
+
+  // Rồi mới toast (sau delay nhỏ để page transition hoàn tất)
+  setTimeout(() => {
+    toast[type](message)
+  }, delay)
 }
 
 /**
