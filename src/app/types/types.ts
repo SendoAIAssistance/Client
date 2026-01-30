@@ -9,10 +9,12 @@ export interface User {
 export interface AuthContextType {
   user: User | null
   accessToken: string | null
-  login: (token: string, userData: User) => void
-  logout: () => void
+  refreshToken: string | null
   loading: boolean
+  login: (access_token: string, refresh_token: string, userData: User) => void
+  logout: () => void
   verifyUser: () => Promise<void>
+  updateUser: (userData: Partial<User>) => void
 }
 
 export interface ApiResponse<T = any> {

@@ -1,20 +1,7 @@
-import { useEffect, useRef } from 'react'
-import { useNavigate } from 'react-router'
-
-import { useUser } from '~/contexts/UserContext'
-import { toastUtils } from '../utils/ToastAndNavigate'
+import { useRequireAuth } from '../providers/AuthProvider'
 
 export function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { user } = useUser()
-  const navigate = useNavigate()
-  const hasNavigatedRef = useRef(false)
-
-  useEffect(() => {
-    if (!user && !hasNavigatedRef.current) {
-      hasNavigatedRef.current = true
-      toastUtils.error(navigate, 'You have to login to access this page.', '/')
-    }
-  }, [user, navigate])
+  const { user } = useRequireAuth()
 
   if (!user) {
     return null

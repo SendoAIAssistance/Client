@@ -9,6 +9,10 @@ export default function NotFound() {
   const handleBackward = () => {
     navigate(-1)
   }
+
+  const handleHome = () => {
+    navigate('/home')
+  }
   return (
     <div className='flex min-h-screen items-center justify-center from-background via-background to-muted/20 px-4 py-16'>
       <Card className='w-full max-w-md border-muted shadow-xl'>
@@ -34,11 +38,7 @@ export default function NotFound() {
 
             {/* Actions */}
             <div className='mt-8 flex w-full flex-col gap-3'>
-              <Button
-                className='w-full hover:text-destructive hover:bg-accent'
-                size='lg'
-                onClick={() => navigate('/home')}
-              >
+              <Button className='w-full hover:text-destructive hover:bg-accent' size='lg' onClick={handleHome}>
                 <Home className='mr-2 h-4 w-4' />
                 Về trang chủ
               </Button>

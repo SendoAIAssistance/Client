@@ -1,7 +1,7 @@
 import { MoonIcon, SunIcon } from 'lucide-react'
 import { useId } from 'react'
 import { Switch } from '~/components/ui/switch'
-import { useTheme } from '~/contexts/theme-provider'
+import { useTheme } from '~/app/providers/theme-provider'
 
 const ModeToggle = () => {
   const id = useId()

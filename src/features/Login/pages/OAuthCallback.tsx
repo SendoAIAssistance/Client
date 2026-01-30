@@ -1,10 +1,8 @@
 import { useEffect, useState } from 'react'
-import { useUser } from '~/contexts/UserContext'
 import { useSearchParams, useNavigate } from 'react-router'
-import { apiClient } from '~/lib/apiClient'
 import type { User } from '~/app/types/types'
-import { endPoints } from '~/lib/endPoints'
 import { toastUtils } from '~/app/utils/ToastAndNavigate'
+import { useAuth } from '~/app/providers/AuthProvider'
 
 const mockUser: User = {
   id: '1',
@@ -14,7 +12,7 @@ const mockUser: User = {
 
 //oauth2/callback?access_token=xyz&refresh_token=abc
 export default function OAuthCallback() {
-  const { user, setUser } = useUser()
+  const { user, login } = useAuth()
   const [isLoading, setIsLoading] = useState(true)
   const [params] = useSearchParams()
   const navigate = useNavigate()
@@ -22,10 +20,6 @@ export default function OAuthCallback() {
   useEffect(() => {
     const handleAuth = async () => {
       try {
-        if (user) {
-          toastUtils.success(navigate, "You're already logged in.", '/home')
-        }
-
         const accessToken = params.get('access_token')
         const refreshToken = params.get('refresh_token')
 
@@ -34,20 +28,7 @@ export default function OAuthCallback() {
           setIsLoading(false)
           return
         }
-
-        // Lưu tokens
-        localStorage.setItem('access_token', accessToken)
-        localStorage.setItem('refresh_token', refreshToken)
-
-        // const response = await apiClient.get<User>(endPoints.auth.me)
-
-        // if (response.data) {
-        //   setUser(response.data)
-        //   navigate('/home')
-        // } else {
-        //   toastUtils.error(navigate, 'Không thể lấy thông tin người dùng', '/')
-        // }
-        setUser(mockUser)
+        login(accessToken, refreshToken, mockUser)
         toastUtils.success(navigate, 'Xác thực thành công!', '/home')
       } catch (err) {
         toastUtils.error(navigate, 'Không thể lấy thông tin người dùng', '/')

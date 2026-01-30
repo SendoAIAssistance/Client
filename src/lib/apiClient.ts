@@ -94,10 +94,10 @@ apiClient.interceptors.response.use(
     if (payload && typeof payload === 'object' && 'success' in payload && 'data' in payload) {
       return response
     }
+
     response.data = {
       success: true,
-      data: payload,
-      message: '',
+      ...payload,
       timestamp: new Date().toISOString()
     }
     return response
