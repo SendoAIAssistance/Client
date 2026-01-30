@@ -11,7 +11,7 @@ export interface AuthContextType {
   accessToken: string | null
   refreshToken: string | null
   loading: boolean
-  login: (access_token: string, refresh_token: string, userData: User) => void
+  login: (access_token: string, refresh_token: string) => void
   logout: () => void
   verifyUser: () => Promise<void>
   updateUser: (userData: Partial<User>) => void

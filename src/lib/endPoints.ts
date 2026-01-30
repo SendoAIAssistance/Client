@@ -6,7 +6,7 @@ export const endPoints = {
   },
   auth: {
     logout: '/api/Auth/logout',
-    me: '/api/Auth/me',
+    me: '/users/me',
     refreshToken: '/api/Auth/refresh-token',
     login: '/api/Auth/login',
     register: '/api/Auth/register'

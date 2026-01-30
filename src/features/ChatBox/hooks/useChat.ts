@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { createStreamingRequest } from '~/lib/apiClient'
+import apiClient, { createStreamingRequest } from '~/lib/apiClient'
 import { endPoints } from '~/lib/endPoints'
 import type { Message } from '../types/chatTypes'
 
@@ -10,53 +10,61 @@ export function useChat() {
   const [conversationId, setConversationId] = useState<string>('')
   const scrollRef = useRef<HTMLDivElement>(null)
 
-  // === INIT: Load/create daily conversationId + messages + cleanup old data ===
+  // === INIT: Load/create daily conversationId + fetch messages from API ===
   useEffect(() => {
-    const today = new Date().toISOString().split('T')[0] // 'YYYY-MM-DD'
+    const initConversation = async () => {
+      const today = new Date().toISOString().split('T')[0] // 'YYYY-MM-DD'
 
-    let convId = ''
-    let initialMessages: Message[] = []
+      let convId = ''
+      const storedDaily = localStorage.getItem('dailyConversation')
 
-    const storedDaily = localStorage.getItem('dailyConversation')
-    if (storedDaily) {
-      try {
-        const parsed = JSON.parse(storedDaily)
-        if (parsed.date === today && parsed.id) {
-          // Cùng ngày → reuse id cũ + load messages
-          convId = parsed.id
-          const storedMsgs = localStorage.getItem(`messages-${convId}`)
-          if (storedMsgs) {
-            initialMessages = JSON.parse(storedMsgs)
+      if (storedDaily) {
+        try {
+          const parsed = JSON.parse(storedDaily)
+          if (parsed.date === today && parsed.id) {
+            // Cùng ngày → reuse id cũ
+            convId = parsed.id
+          } else {
+            // Ngày mới → tạo id mới
+            localStorage.removeItem('dailyConversation')
           }
-        } else {
-          // Ngày mới → cleanup messages của id cũ
-          if (parsed.id) {
-            localStorage.removeItem(`messages-${parsed.id}`)
-          }
+        } catch (e) {
+          console.error('Error parsing daily conversation', e)
           localStorage.removeItem('dailyConversation')
         }
-      } catch (e) {
-        console.error('Error parsing daily conversation', e)
-        localStorage.removeItem('dailyConversation')
+      }
+
+      // Tạo id mới nếu chưa có
+      if (!convId) {
+        convId = `conv-${Date.now()}`
+        localStorage.setItem('dailyConversation', JSON.stringify({ date: today, id: convId }))
+      }
+
+      setConversationId(convId)
+
+      // Fetch messages từ API
+      try {
+        const res = await apiClient.get(endPoints.chat.getChatHistory, {
+          params: { conversationId: convId }
+        })
+        const chatMessages = res?.data?.data || []
+        setMessages(chatMessages)
+      } catch (err) {
+        console.error('Failed to load messages:', err)
+        setMessages([])
       }
     }
 
-    // Tạo id mới nếu chưa có (ngày mới hoặc lần đầu)
-    if (!convId) {
-      convId = `conv-${Date.now()}`
-      localStorage.setItem('dailyConversation', JSON.stringify({ date: today, id: convId }))
-    }
-
-    setConversationId(convId)
-    setMessages(initialMessages)
+    initConversation()
   }, [])
 
-  // === Persist messages mỗi khi thay đổi ===
+  // Lưu conversationId vào localStorage khi thay đổi
   useEffect(() => {
     if (conversationId) {
-      localStorage.setItem(`messages-${conversationId}`, JSON.stringify(messages))
+      const today = new Date().toISOString().split('T')[0]
+      localStorage.setItem('dailyConversation', JSON.stringify({ date: today, id: conversationId }))
     }
-  }, [messages, conversationId])
+  }, [conversationId])
 
   // === Auto scroll ===
   useEffect(() => {

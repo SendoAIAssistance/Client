@@ -1,14 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useSearchParams, useNavigate } from 'react-router'
-import type { User } from '~/app/types/types'
 import { toastUtils } from '~/app/utils/ToastAndNavigate'
 import { useAuth } from '~/app/providers/AuthProvider'
-
-const mockUser: User = {
-  id: '1',
-  name: 'Nguyen Van A',
-  email: 'kenn0679@gmail.com'
-}
 
 //oauth2/callback?access_token=xyz&refresh_token=abc
 export default function OAuthCallback() {
@@ -28,7 +21,7 @@ export default function OAuthCallback() {
           setIsLoading(false)
           return
         }
-        login(accessToken, refreshToken, mockUser)
+        login(accessToken, refreshToken)
         toastUtils.success(navigate, 'Xác thực thành công!', '/home')
       } catch (err) {
         toastUtils.error(navigate, 'Không thể lấy thông tin người dùng', '/')
