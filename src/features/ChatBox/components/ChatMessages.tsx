@@ -2,12 +2,12 @@ import { Lightbulb } from 'lucide-react'
 import type { Message } from '../types/chatTypes'
 import { ChatMessageItem } from './ChatMessageItem'
 
-interface Props {
+interface ChatMessageProps {
   messages: Message[]
   scrollRef: React.RefObject<HTMLDivElement>
 }
 
-export function ChatMessages({ messages, scrollRef }: Props) {
+export function ChatMessages({ messages, scrollRef }: ChatMessageProps) {
   if (messages.length === 0) {
     return (
       <div className='h-full flex items-center justify-center text-center py-20'>

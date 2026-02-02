@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import apiClient, { createStreamingRequest } from '~/lib/apiClient'
 import { endPoints } from '~/lib/endPoints'
-import type { Message } from '../types/chatTypes'
+import { MessageStatus, type Message } from '../types/chatTypes'
 
 export function useChat() {
   const [messages, setMessages] = useState<Message[]>([])
@@ -79,7 +79,7 @@ export function useChat() {
     const userMessage: Message = {
       conversationId,
       message: userInput,
-      status: 'PENDING',
+      status: MessageStatus.PENDING,
       created_at: new Date(),
       updated_at: new Date(),
       isAI: false
@@ -93,7 +93,7 @@ export function useChat() {
       const aiMessage: Message = {
         conversationId,
         message: '',
-        status: 'IN_PROGRESS',
+        status: MessageStatus.IN_PROGRESS,
         created_at: new Date(),
         updated_at: new Date(),
         isAI: true
@@ -103,7 +103,7 @@ export function useChat() {
 
       const response = await createStreamingRequest(endPoints.chat.sendMessage, {
         conversationId,
-        userMessage: userInput
+        userMessage
       })
 
       const reader = response.body?.getReader()
@@ -134,7 +134,7 @@ export function useChat() {
         const updated = [...prev]
         const last = updated[updated.length - 1]
         if (last?.isAI) {
-          last.status = 'COMPLETED'
+          last.status = MessageStatus.DONE
           last.updated_at = new Date()
         }
         return updated
@@ -150,7 +150,7 @@ export function useChat() {
         const updated = [...prev]
         const last = updated[updated.length - 1]
         if (last?.isAI) {
-          last.status = 'IN_PROGRESS'
+          last.status = MessageStatus.IN_PROGRESS
           last.message = ''
         }
         return updated
@@ -179,7 +179,7 @@ export function useChat() {
             const updated = [...prev]
             const last = updated[updated.length - 1]
             if (last?.isAI) {
-              last.status = 'ERROR'
+              last.status = MessageStatus.ERROR
               last.updated_at = new Date()
             }
             return updated
