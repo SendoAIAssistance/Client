@@ -56,7 +56,8 @@ export function ChatMessageItem({ message }: Props) {
           ) : (
             <p className='text-sm leading-relaxed whitespace-pre-wrap wrap-break-word'>
               {message.status === 'ERROR'
-                ? message.message || 'Tuy nhiên hệ thống đang gặp lỗi, hãy liên hệ cố vấn kĩ thuật để sửa chữa'
+                ? message.message ||
+                  'However, the system is experiencing an error. Please contact technical support for assistance.'
                 : message.message}
             </p>
           )}

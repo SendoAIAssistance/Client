@@ -22,10 +22,10 @@ export function useChat() {
         try {
           const parsed = JSON.parse(storedDaily)
           if (parsed.date === today && parsed.id) {
-            // Cùng ngày → reuse id cũ
+            // Same day → reuse old id
             convId = parsed.id
           } else {
-            // Ngày mới → tạo id mới
+            // New day → create new id
             localStorage.removeItem('dailyConversation')
           }
         } catch (e) {
@@ -34,7 +34,7 @@ export function useChat() {
         }
       }
 
-      // Tạo id mới nếu chưa có
+      // Create new id if not exists
       if (!convId) {
         convId = `conv-${Date.now()}`
         localStorage.setItem('dailyConversation', JSON.stringify({ date: today, id: convId }))
@@ -42,7 +42,7 @@ export function useChat() {
 
       setConversationId(convId)
 
-      // Fetch messages từ API
+      // Fetch messages from API
       try {
         const res = await apiClient.get(endPoints.chat.getChatHistory, {
           params: { conversationId: convId }
@@ -58,7 +58,7 @@ export function useChat() {
     initConversation()
   }, [])
 
-  // Lưu conversationId vào localStorage khi thay đổi
+  // Save conversationId to localStorage when it changes
   useEffect(() => {
     if (conversationId) {
       const today = new Date().toISOString().split('T')[0]
@@ -102,12 +102,12 @@ export function useChat() {
 
       setMessages((prev) => [...prev, aiMessage])
 
-      // Tạo FormData để gửi cả text và files
+      // Create FormData to send both text and files
       const formData = new FormData()
       formData.append('conversationId', conversationId)
       formData.append('message', userInput)
 
-      // Append files nếu có
+      // Append files if they exist
       if (files && files.length > 0) {
         files.forEach((file, index) => {
           formData.append(`file_${index}`, file)
@@ -154,9 +154,9 @@ export function useChat() {
       setIsLoading(false)
     } catch {
       // ERROR CASE
-      const errorMessage = 'Hệ thống không nhận được câu trả lời, hãy liên hệ cố vấn kĩ thuật'
+      const errorMessage = 'System did not receive a response. Please contact technical support.'
 
-      // Reset AI message để typing error
+      // Reset AI message for typing error display
       setMessages((prev) => {
         const updated = [...prev]
         const last = updated[updated.length - 1]
@@ -185,7 +185,7 @@ export function useChat() {
 
           setTimeout(streamError, 30)
         } else {
-          // DONE typing error
+          // Finished typing error message
           setMessages((prev) => {
             const updated = [...prev]
             const last = updated[updated.length - 1]

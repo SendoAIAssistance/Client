@@ -185,7 +185,7 @@ apiClient.interceptors.response.use(
 // Streaming helpers
 // ───────────────────────────────────────────────
 
-/** Tạo request streaming dùng fetch */
+/** Create streaming request using fetch */
 export async function createStreamingRequest(
   url: string,
   data: Record<string, any>,
