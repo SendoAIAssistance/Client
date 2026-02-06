@@ -8,8 +8,8 @@ import { ChatInput } from './components/ChatInput'
 export default function ChatBox() {
   const { messages, inputValue, setInputValue, isLoading, sendMessage, scrollRef } = useChat()
 
-  const handleSend = () => {
-    sendMessage(inputValue)
+  const handleSend = ({ message, files }: { message: string; files?: File[] }) => {
+    sendMessage(message, files)
   }
 
   return (

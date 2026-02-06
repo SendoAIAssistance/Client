@@ -73,12 +73,13 @@ export function useChat() {
     }
   }, [messages])
 
-  const sendMessage = async (userInput: string) => {
-    if (!userInput.trim() || !conversationId) return
+  const sendMessage = async (userInput: string, files?: File[]) => {
+    if ((!userInput.trim() && (!files || files.length === 0)) || !conversationId) return
 
     const userMessage: Message = {
       conversationId,
       message: userInput,
+      files: files,
       status: MessageStatus.PENDING,
       created_at: new Date(),
       updated_at: new Date(),
@@ -101,10 +102,20 @@ export function useChat() {
 
       setMessages((prev) => [...prev, aiMessage])
 
-      const response = await createStreamingRequest(endPoints.chat.sendMessage, {
-        conversationId,
-        userMessage
-      })
+      // Tạo FormData để gửi cả text và files
+      const formData = new FormData()
+      formData.append('conversationId', conversationId)
+      formData.append('message', userInput)
+
+      // Append files nếu có
+      if (files && files.length > 0) {
+        files.forEach((file, index) => {
+          formData.append(`file_${index}`, file)
+        })
+        formData.append('fileCount', files.length.toString())
+      }
+
+      const response = await createStreamingRequest(endPoints.chat.sendMessage, formData)
 
       const reader = response.body?.getReader()
       const decoder = new TextDecoder()

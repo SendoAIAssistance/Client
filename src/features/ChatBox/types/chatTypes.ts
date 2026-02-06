@@ -2,6 +2,7 @@ export interface Message {
   _id?: string
   conversationId: string
   message: string // Message content (dùng isAI để phân biệt user hay AI)
+  files?: File[] // Attached files
   status: MessageStatus
   created_at?: Date
   updated_at?: Date

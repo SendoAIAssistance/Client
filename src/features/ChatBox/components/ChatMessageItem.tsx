@@ -2,6 +2,7 @@ import { CheckCheck, Lightbulb, Loader2, User, XCircle } from 'lucide-react'
 import type { Message } from '../types/chatTypes'
 import { formatTime } from '../utils/formatTime'
 import { cn } from '~/lib/utils'
+import { FilePreview } from './FilePreview'
 
 interface Props {
   message: Message
@@ -16,7 +17,10 @@ export function ChatMessageItem({ message }: Props) {
       <div className='flex justify-end gap-3 animate-in fade-in slide-in-from-Lightbulb tom-2 duration-300'>
         <div className='flex flex-col items-end gap-1.5 max-w-full overflow-x-hidden'>
           <div className='bg-primary text-primary-foreground rounded-2xl rounded-tr-md px-4 py-3 shadow-md border border-primary/30'>
-            <p className='text-sm leading-relaxed font-medium wrap-break-words'>{message.message}</p>
+            {message.message && (
+              <p className='text-sm leading-relaxed font-medium wrap-break-words'>{message.message}</p>
+            )}
+            {message.files && message.files.length > 0 && <FilePreview files={message.files} />}
           </div>
           <div className='flex items-center gap-1.5 px-2'>
             <User className='h-3 w-3 text-muted-foreground' />

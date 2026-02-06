@@ -29,7 +29,9 @@ export function ChatMessages({ messages, scrollRef }: ChatMessageProps) {
   return (
     <div className='space-y-6 overflow-x-hidden max-w-full'>
       {messages.map((msg, idx) => (
-        <ChatMessageItem key={idx} message={msg} />
+        <div key={idx}>
+          <ChatMessageItem message={msg} />
+        </div>
       ))}
       <div ref={scrollRef} />
     </div>
