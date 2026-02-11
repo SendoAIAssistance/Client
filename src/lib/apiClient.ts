@@ -278,4 +278,18 @@ export async function readStream(
   }
 }
 
+export async function fetchThinkingStream(
+  messageId: string,
+  onChunk: (text: string) => void,
+  onComplete?: () => void
+): Promise<void> {
+  const response = await createStreamingRequest(
+    endPoints.ai.getResults,
+    { messageId },
+    { onError: (err) => console.error('Thinking stream error:', err) }
+  )
+
+  await readStream(response, onChunk, onComplete)
+}
+
 export default apiClient

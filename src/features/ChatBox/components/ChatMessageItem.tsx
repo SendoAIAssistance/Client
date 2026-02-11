@@ -1,78 +1,143 @@
-import { CheckCheck, Lightbulb, Loader2, User, XCircle } from 'lucide-react'
+import { useState } from 'react'
+import { ChevronDown, Loader2, AlertCircle, BotIcon } from 'lucide-react'
+import { Button } from '~/components/ui/button'
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '~/components/ui/collapsible'
 import type { Message } from '../types/chatTypes'
-import { formatTime } from '../utils/formatTime'
-import { cn } from '~/lib/utils'
-import { FilePreview } from './FilePreview'
+import { createStreamingRequest, readStream } from '~/lib/apiClient'
+import { endPoints } from '~/lib/endPoints'
+import { useAuth } from '~/app/providers/AuthProvider'
 
-interface Props {
+interface ChatMessageItemProps {
   message: Message
 }
 
-export function ChatMessageItem({ message }: Props) {
-  const isAI = message.isAI
+export function ChatMessageItem({ message }: ChatMessageItemProps) {
+  const [thinking, setThinking] = useState(message.thinking || '')
+  const [isThinkingOpen, setIsThinkingOpen] = useState(false)
+  const [isLoadingThinking, setIsLoadingThinking] = useState(false)
+  const [thinkingError, setThinkingError] = useState<string | null>(null)
+  const isAI = message.isAI ?? false
+  const { user } = useAuth()
 
-  if (!isAI) {
-    // User message
-    return (
-      <div className='flex justify-end gap-3 animate-in fade-in slide-in-from-Lightbulb tom-2 duration-300'>
-        <div className='flex flex-col items-end gap-1.5 max-w-full overflow-x-hidden'>
-          <div className='bg-primary text-primary-foreground rounded-2xl rounded-tr-md px-4 py-3 shadow-md border border-primary/30'>
-            {message.message && (
-              <p className='text-sm leading-relaxed font-medium wrap-break-words'>{message.message}</p>
-            )}
-            {message.files && message.files.length > 0 && <FilePreview files={message.files} />}
-          </div>
-          <div className='flex items-center gap-1.5 px-2'>
-            <User className='h-3 w-3 text-muted-foreground' />
-            <p className='text-xs text-muted-foreground font-medium'>{formatTime(message.created_at)}</p>
-          </div>
-        </div>
-      </div>
-    )
+  const handleLoadThinking = async () => {
+    if (thinking || isLoadingThinking) return
+
+    setIsLoadingThinking(true)
+    setThinkingError(null)
+
+    try {
+      const response = await createStreamingRequest(endPoints.ai.getResults, {
+        messageId: message._id
+      })
+
+      let thinkingText = ''
+      await readStream(
+        response,
+        (chunk: string) => {
+          thinkingText += chunk
+          setThinking(thinkingText)
+        },
+        () => {
+          setIsLoadingThinking(false)
+        },
+        (err: Error) => {
+          setThinkingError(err.message)
+          setIsLoadingThinking(false)
+        }
+      )
+    } catch (err: any) {
+      setThinkingError(err.message || 'Failed to load thinking')
+      setIsLoadingThinking(false)
+    }
   }
 
-  // AI message
+  const formatThinkingDuration = () => {
+    if (!message.thinkingDuration) return ''
+    if (message.thinkingDuration < 1000) {
+      return `${message.thinkingDuration}ms`
+    }
+    return `${(message.thinkingDuration / 1000).toFixed(1)}s`
+  }
+
   return (
-    <div className='flex justify-start gap-3 animate-in fade-in slide-in-from-Lightbulb tom-2 duration-300'>
-      <div className='shrink-0 mt-1'>
-        <div className='p-2 bg-accent/20 rounded-lg border border-accent/30'>
-          <Lightbulb className='h-5 w-5 text-accent-foreground' />
-        </div>
+    <div className={`flex gap-3 mb-6 ${isAI ? 'flex-row' : 'flex-row-reverse'}`}>
+      {/* Avatar */}
+      <div
+        className={`w-8 h-8 rounded-full shrink-0 flex items-center justify-center text-xs font-semibold ${
+          isAI ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
+        }`}
+      >
+        {isAI ? <BotIcon className='w-4 h-4' /> : user?.name?.charAt(0).toUpperCase()}
       </div>
-      <div className='flex flex-col gap-1.5  max-w-full overflow-x-hidden'>
+
+      {/* Message content */}
+      <div
+        className={`flex-1 max-w-[calc(100vw-5rem)] min-w-0 flex flex-col ${isAI ? 'items-start pr-10' : 'items-end pl-10'}`}
+      >
+        {/* Thinking section - only for AI messages */}
+        {isAI && (
+          <Collapsible open={isThinkingOpen} onOpenChange={setIsThinkingOpen} className='w-full mb-2 text-left'>
+            <CollapsibleTrigger asChild>
+              <Button
+                variant='ghost'
+                size='sm'
+                className='h-auto px-2 py-1.5 text-xs text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                onClick={!thinking && !isLoadingThinking ? handleLoadThinking : undefined}
+              >
+                <ChevronDown className={`w-3 h-3 mr-1.5 transition-transform ${isThinkingOpen ? 'rotate-180' : ''}`} />
+                {isLoadingThinking ? (
+                  <>
+                    <Loader2 className='w-3 h-3 mr-1 animate-spin' />
+                    Loading thinking...
+                  </>
+                ) : (
+                  <>Thought for {formatThinkingDuration()}</>
+                )}
+              </Button>
+            </CollapsibleTrigger>
+
+            <CollapsibleContent className='mt-2'>
+              {thinkingError ? (
+                <div className='flex items-start gap-2 p-3 bg-destructive/10 rounded-lg border border-destructive/20 text-left'>
+                  <AlertCircle className='w-4 h-4 text-destructive shrink-0 mt-0.5' />
+                  <p className='text-xs text-destructive'>{thinkingError}</p>
+                </div>
+              ) : (
+                <div className='p-3 bg-muted/50 rounded-lg border border-border/50 text-xs leading-relaxed text-muted-foreground whitespace-pre-wrap max-h-64 overflow-y-auto text-left'>
+                  {thinking || (
+                    <span className='text-muted-foreground/60'>
+                      {isLoadingThinking ? 'Loading...' : 'No thinking available'}
+                    </span>
+                  )}
+                </div>
+              )}
+            </CollapsibleContent>
+          </Collapsible>
+        )}
+
+        {/* Main message bubble */}
         <div
-          className={cn(
-            'rounded-2xl rounded-tl-md px-4 py-3 shadow-sm border-2 transition-all wrap-break-words overflow-wrap-anywhere',
-            message.status === 'ERROR'
-              ? 'bg-destructive/15 text-destructive border-destructive/30'
-              : 'bg-muted text-foreground border-muted/50'
-          )}
+          className={`px-4 py-3 rounded-lg max-w-2xl text-left ${
+            isAI ? 'bg-muted text-foreground rounded-tl-none' : 'bg-primary text-primary-foreground rounded-tr-none'
+          }`}
         >
-          {message.status === 'IN_PROGRESS' && !message.message ? (
-            <div className='flex items-center gap-2.5 py-1'>
-              <Loader2 className='h-4 w-4 animate-spin text-primary' />
-              <span className='text-sm font-semibold text-muted-foreground'>Thinking...</span>
-            </div>
-          ) : (
-            <p className='text-sm leading-relaxed whitespace-pre-wrap wrap-break-word'>
-              {message.status === 'ERROR'
-                ? message.message ||
-                  'However, the system is experiencing an error. Please contact technical support for assistance.'
-                : message.message}
-            </p>
-          )}
+          <p className='text-sm leading-relaxed whitespace-pre-wrap wrap-break-words'>{message.message}</p>
         </div>
-        <div className='flex items-center gap-2 px-2'>
-          {message.status === 'IN_PROGRESS' && message.message && (
-            <>
-              <Loader2 className='h-3 w-3 animate-spin text-primary' />
-              <span className='text-xs text-primary font-bold'>typing...</span>
-            </>
-          )}
-          {message.status === 'COMPLETED' && <CheckCheck className='h-3.5 w-3.5 text-accent' />}
-          {message.status === 'ERROR' && <XCircle className='h-3.5 w-3.5 text-destructive' />}
-          <p className='text-xs text-muted-foreground font-medium'>{formatTime(message.updated_at)}</p>
-        </div>
+
+        {/* Status indicator */}
+        {message.status === 'IN_PROGRESS' && (
+          <div className='flex items-center gap-1.5 text-xs text-muted-foreground px-1 mt-2'>
+            <Loader2 className='w-3 h-3 animate-spin' />
+            <span>Typing...</span>
+          </div>
+        )}
+
+        {message.status === 'ERROR' && (
+          <div className='flex items-center gap-1.5 text-xs text-destructive px-1 mt-2'>
+            <AlertCircle className='w-3 h-3' />
+            <span>Failed to send</span>
+          </div>
+        )}
       </div>
     </div>
   )

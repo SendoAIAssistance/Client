@@ -6,6 +6,8 @@ export interface Message {
   status: MessageStatus
   created_at?: Date
   updated_at?: Date
+  thinking?: string
+  thinkingDuration?: number
   isAI?: boolean
 }
 

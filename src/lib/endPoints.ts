@@ -10,5 +10,10 @@ export const endPoints = {
     refreshToken: '/api/Auth/refresh-token',
     login: '/api/Auth/login',
     register: '/api/Auth/register'
+  },
+  ai: {
+    getAIModels: '/api/ai/models',
+    getAISuggestions: '/api/ai/suggestions',
+    getResults: '/api/ai/results'
   }
 }

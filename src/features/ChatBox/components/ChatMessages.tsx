@@ -6,7 +6,6 @@ interface ChatMessageProps {
   messages: Message[]
   scrollRef: React.RefObject<HTMLDivElement>
 }
-
 export function ChatMessages({ messages, scrollRef }: ChatMessageProps) {
   if (messages.length === 0) {
     return (
