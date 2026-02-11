@@ -1,5 +1,7 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');
 @import 'tailwindcss';
 @import 'tw-animate-css';
+
 /*this one for set min width and height (equal iphone SE) */
 @layer base {
   html,
@@ -45,8 +47,10 @@
     --sidebar-accent-foreground: oklch(0.3068 0.0337 54.7785);
     --sidebar-border: oklch(0.8292 0.0286 76.1682);
     --sidebar-ring: oklch(0.4708 0.1121 50.8452);
-    --font-sans: Garamond, serif;
-    --font-serif: Georgia, serif;
+    --font-family: 'Montserrat', sans-serif;
+    --font-optical-sizing: auto;
+    --font-weight: <weight>;
+    --font-style: normal;
     --font-mono: Courier Prime, monospace;
     --radius: 1.25rem;
     --shadow-x: 0px;
@@ -100,8 +104,10 @@
     --sidebar-accent-foreground: oklch(0.882 0.0308 69.0089);
     --sidebar-border: oklch(0.3068 0.0337 54.7785);
     --sidebar-ring: oklch(0.7862 0.0638 74.619);
-    --font-sans: Garamond, serif;
-    --font-serif: Georgia, serif;
+    --font-family: 'Montserrat', sans-serif;
+    --font-optical-sizing: auto;
+    --font-weight: <weight>;
+    --font-style: normal;
     --font-mono: Courier Prime, monospace;
     --radius: 1.25rem;
     --shadow-x: 0px;

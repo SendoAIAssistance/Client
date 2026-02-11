@@ -110,12 +110,12 @@ export function ChatMessageItem({ message }: ChatMessageItemProps) {
 
         {/* Main message bubble */}
         <div
-          className={`px-4 py-3 rounded-lg max-w-2xl text-left ${
-            isAI ? 'bg-muted text-foreground rounded-tl-none' : 'bg-primary text-primary-foreground rounded-tr-none'
-          }`}
+          className={`px-4 py-3 rounded-lg max-w-2xl text-left ${!isAI ? 'mt-6' : ''} ${
+            isAI ? ' text-foreground rounded-tl-none' : 'bg-primary text-primary-foreground rounded-tr-none'
+          } ${message.status === 'ERROR' ? ' bg bg-destructive/25 border border-destructive' : 'bg-muted'}`}
         >
           {!isAI && message.files && message.files.length > 0 && <FilePreview files={message.files} />}
-          <p className='text-sm leading-relaxed whitespace-pre-wrap wrap-break-words'>{message.message}</p>
+          <p className={`text-sm leading-relaxed whitespace-pre-wrap wrap-break-words`}>{message.message}</p>
         </div>
 
         {/* Status indicator */}
