@@ -3,9 +3,9 @@ import { ChevronDown, Loader2, AlertCircle, BotIcon } from 'lucide-react'
 import { Button } from '~/components/ui/button'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '~/components/ui/collapsible'
 import type { Message } from '../types/chatTypes'
-import { createStreamingRequest, readStream } from '~/lib/apiClient'
-import { endPoints } from '~/lib/endPoints'
+import { fetchThinkingStream } from '~/lib/apiClient'
 import { useAuth } from '~/app/providers/AuthProvider'
+import { FilePreview } from './FilePreview'
 
 interface ChatMessageItemProps {
   message: Message
@@ -26,22 +26,15 @@ export function ChatMessageItem({ message }: ChatMessageItemProps) {
     setThinkingError(null)
 
     try {
-      const response = await createStreamingRequest(endPoints.ai.getResults, {
-        messageId: message._id
-      })
-
       let thinkingText = ''
-      await readStream(
-        response,
+
+      await fetchThinkingStream(
+        message._id || '',
         (chunk: string) => {
           thinkingText += chunk
           setThinking(thinkingText)
         },
         () => {
-          setIsLoadingThinking(false)
-        },
-        (err: Error) => {
-          setThinkingError(err.message)
           setIsLoadingThinking(false)
         }
       )
@@ -74,7 +67,7 @@ export function ChatMessageItem({ message }: ChatMessageItemProps) {
       <div
         className={`flex-1 max-w-[calc(100vw-5rem)] min-w-0 flex flex-col ${isAI ? 'items-start pr-10' : 'items-end pl-10'}`}
       >
-        {/* Thinking section - only for AI messages */}
+        {/* Thinking section */}
         {isAI && (
           <Collapsible open={isThinkingOpen} onOpenChange={setIsThinkingOpen} className='w-full mb-2 text-left'>
             <CollapsibleTrigger asChild>
@@ -88,7 +81,7 @@ export function ChatMessageItem({ message }: ChatMessageItemProps) {
                 {isLoadingThinking ? (
                   <>
                     <Loader2 className='w-3 h-3 mr-1 animate-spin' />
-                    Loading thinking...
+                    Getting thought...
                   </>
                 ) : (
                   <>Thought for {formatThinkingDuration()}</>
@@ -121,6 +114,7 @@ export function ChatMessageItem({ message }: ChatMessageItemProps) {
             isAI ? 'bg-muted text-foreground rounded-tl-none' : 'bg-primary text-primary-foreground rounded-tr-none'
           }`}
         >
+          {!isAI && message.files && message.files.length > 0 && <FilePreview files={message.files} />}
           <p className='text-sm leading-relaxed whitespace-pre-wrap wrap-break-words'>{message.message}</p>
         </div>
 

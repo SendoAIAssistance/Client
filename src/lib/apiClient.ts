@@ -281,15 +281,12 @@ export async function readStream(
 export async function fetchThinkingStream(
   messageId: string,
   onChunk: (text: string) => void,
-  onComplete?: () => void
+  onComplete?: () => void,
+  onError?: (err: Error) => void // ← Thêm callback này
 ): Promise<void> {
-  const response = await createStreamingRequest(
-    endPoints.ai.getResults,
-    { messageId },
-    { onError: (err) => console.error('Thinking stream error:', err) }
-  )
+  const response = await createStreamingRequest(endPoints.ai.getResults, { messageId })
 
-  await readStream(response, onChunk, onComplete)
+  await readStream(response, onChunk, onComplete, onError)
 }
 
 export default apiClient

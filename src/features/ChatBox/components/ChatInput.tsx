@@ -1,7 +1,7 @@
 import { Loader2, Send, Paperclip, X } from 'lucide-react'
 import { Button } from '~/components/ui/button'
 import { Input } from '~/components/ui/input'
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import Modal from './Modal'
 
 interface Props {
@@ -15,6 +15,7 @@ export function ChatInput({ inputValue, setInputValue, onSend, isLoading }: Prop
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [selectedFiles, setSelectedFiles] = useState<File[]>([])
   const [isDragging, setIsDragging] = useState(false)
+  const inputRef = useRef<HTMLInputElement>(null)
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -67,6 +68,41 @@ export function ChatInput({ inputValue, setInputValue, onSend, isLoading }: Prop
     const i = Math.floor(Math.log(bytes) / Math.log(k))
     return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i]
   }
+
+  useEffect(() => {
+    const handleGlobalPaste = (e: ClipboardEvent) => {
+      if (isDialogOpen && document.activeElement !== inputRef.current) return
+
+      const items = e.clipboardData
+      if (!items) return
+
+      const imageFiles: File[] = []
+
+      for (const item of items.items) {
+        if (item.type.startsWith('image/')) {
+          const file = item.getAsFile()
+          if (file) {
+            const timestamp = Date.now()
+            const extension = item.type.split('/')[1] || 'png'
+            const newFile = new File([file], `pasted-image-${timestamp}.${extension}`, {
+              type: file.type
+            })
+            imageFiles.push(newFile)
+          }
+        }
+      }
+
+      if (imageFiles.length > 0) {
+        e.preventDefault() // ← quan trọng: ngăn dán ảnh mặc định
+        setSelectedFiles((prev) => [...prev, ...imageFiles])
+      }
+    }
+
+    document.addEventListener('paste', handleGlobalPaste)
+    return () => {
+      document.removeEventListener('paste', handleGlobalPaste)
+    }
+  }, [isDialogOpen])
 
   return (
     <>
@@ -121,8 +157,9 @@ export function ChatInput({ inputValue, setInputValue, onSend, isLoading }: Prop
             <Paperclip className='h-5 w-5' />
           </Button>
           <Input
+            ref={inputRef}
             type='text'
-            placeholder='Type your message...'
+            placeholder='Type your message or paste images...'
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             onKeyDown={handleKeyPress}
