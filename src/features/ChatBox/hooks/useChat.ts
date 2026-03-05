@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import apiClient, { createStreamingRequest } from '~/lib/apiClient'
+import apiClient, { createStreamingRequest, readStream } from '~/lib/apiClient'
 import { endPoints } from '~/lib/endPoints'
 import { MessageStatus, type Message } from '../types/chatTypes'
 
@@ -115,18 +115,13 @@ export function useChat() {
         formData.append('fileCount', files.length.toString())
       }
 
-      const response = await createStreamingRequest(endPoints.chat.sendMessage, formData)
-
-      const reader = response.body?.getReader()
-      const decoder = new TextDecoder()
-      if (!reader) throw new Error('No response body')
+      const [, response] = await Promise.all([
+        apiClient.post(endPoints.chat.sendMessage, userMessage),
+        createStreamingRequest(endPoints.ai.sendMessage, formData)
+      ])
 
       let fullResponse = ''
-      while (true) {
-        const { done, value } = await reader.read()
-        if (done) break
-
-        const chunk = decoder.decode(value, { stream: true })
+      await readStream(response, (chunk) => {
         fullResponse += chunk
 
         setMessages((prev) => {
@@ -138,9 +133,8 @@ export function useChat() {
           }
           return updated
         })
-      }
+      })
 
-      // DONE - NORMAL CASE
       setMessages((prev) => {
         const updated = [...prev]
         const last = updated[updated.length - 1]
@@ -150,6 +144,16 @@ export function useChat() {
         }
         return updated
       })
+
+      const aiMessageToSave: Message = {
+        conversationId,
+        message: fullResponse,
+        status: MessageStatus.DONE,
+        created_at: new Date(),
+        updated_at: new Date(),
+        isAI: true
+      }
+      await apiClient.post(endPoints.chat.sendMessage, aiMessageToSave)
 
       setIsLoading(false)
     } catch {

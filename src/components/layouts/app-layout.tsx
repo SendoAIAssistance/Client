@@ -8,8 +8,8 @@ export function AppLayout() {
     <div className='flex min-h-dvh w-full'>
       <SidebarProvider>
         <AppSidebar />
-        <div className='flex flex-1 flex-col'>
-          <header className='bg-card sticky top-0 z-50 flex h-13.75 items-center justify-between gap-6 border-b px-4 py-2 sm:px-6'>
+        <div className='flex flex-1 flex-col overflow-y-auto h-dvh'>
+          <header className='sticky bg-card top-0 z-50 flex h-13.75 items-center justify-between gap-6 border-b px-4 py-2 sm:px-6'>
             <SidebarTrigger className='[&_svg]:size-5!' />
             <div className='ml-auto'>
               <ModeToggle />

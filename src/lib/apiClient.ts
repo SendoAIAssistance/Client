@@ -188,16 +188,17 @@ apiClient.interceptors.response.use(
 /** Create streaming request using fetch */
 export async function createStreamingRequest(
   url: string,
-  data: Record<string, any>,
+  data: Record<string, any> | FormData,
   options?: { signal?: AbortSignal; onError?: (err: Error) => void }
 ): Promise<Response> {
   const token = localStorage.getItem('access_token')
   const base = apiClient.defaults.baseURL || ''
   const fullUrl = base + (url.startsWith('/') ? url : '/' + url)
 
+  const isFormData = data instanceof FormData
   const headers: HeadersInit = {
-    'Content-Type': 'application/json',
-    ...(token && { Authorization: `Bearer ${token}` })
+    ...(token && { Authorization: `Bearer ${token}` }),
+    ...(isFormData ? {} : { 'Content-Type': 'application/json' })
   }
 
   try {
@@ -205,7 +206,7 @@ export async function createStreamingRequest(
       method: 'POST',
       headers,
       credentials: 'include',
-      body: JSON.stringify(data),
+      body: isFormData ? data : JSON.stringify(data),
       signal: options?.signal
     })
 

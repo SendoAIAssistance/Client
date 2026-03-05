@@ -14,6 +14,7 @@ export const endPoints = {
   ai: {
     getAIModels: '/api/ai/models',
     getAISuggestions: '/api/ai/suggestions',
-    getResults: '/api/ai/results'
+    getResults: '/api/ai/results',
+    sendMessage: '/api/ai/send-message'
   }
 }
