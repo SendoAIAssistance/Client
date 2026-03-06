@@ -185,6 +185,46 @@ apiClient.interceptors.response.use(
 // Streaming helpers
 // ───────────────────────────────────────────────
 
+export type StreamMessageType = 'chunk' | 'thinking'
+
+export interface StreamEventPayload {
+  type?: StreamMessageType | string
+  content?: string
+  status?: string
+  [key: string]: unknown
+}
+
+interface ReadStreamOptions {
+  streamType?: StreamMessageType | 'all'
+}
+
+const parseSseDataLine = (line: string): StreamEventPayload | null => {
+  const trimmed = line.trim()
+  if (!trimmed.startsWith('data:')) return null
+
+  const raw = trimmed.slice(5).trim()
+  if (!raw || raw === '[DONE]') return null
+
+  try {
+    const parsed = JSON.parse(raw)
+    if (parsed && typeof parsed === 'object') {
+      return parsed as StreamEventPayload
+    }
+  } catch {
+    return {
+      type: 'chunk',
+      content: raw,
+      status: 'IN_PROGRESS'
+    }
+  }
+
+  return null
+}
+
+const shouldEmitStreamEvent = (eventType: string, targetType: StreamMessageType | 'all' = 'all'): boolean => {
+  return targetType === 'all' || eventType.toLowerCase() === targetType
+}
+
 /** Create streaming request using fetch */
 export async function createStreamingRequest(
   url: string,
@@ -253,23 +293,52 @@ export async function createStreamingRequest(
 /** Đọc stream từng chunk */
 export async function readStream(
   response: Response,
-  onChunk: (text: string) => void,
+  onChunk: (text: string, event?: StreamEventPayload) => void,
   onComplete?: () => void,
-  onError?: (err: Error) => void
+  onError?: (err: Error) => void,
+  options?: ReadStreamOptions
 ): Promise<void> {
   const reader = response.body?.getReader()
   if (!reader) throw new Error('Response body not readable')
 
   const decoder = new TextDecoder()
+  let buffer = ''
+
+  const targetType = options?.streamType ?? 'all'
+
+  const processBuffer = (flush = false) => {
+    const lines = buffer.split(/\r?\n/)
+    if (!flush) {
+      buffer = lines.pop() || ''
+    } else {
+      buffer = ''
+    }
+
+    for (const line of lines) {
+      const payload = parseSseDataLine(line)
+      if (!payload) continue
+
+      const eventType = String(payload.type || '').toLowerCase()
+      if (!eventType || !shouldEmitStreamEvent(eventType, targetType)) continue
+
+      const content = typeof payload.content === 'string' ? payload.content : ''
+      if (!content) continue
+
+      onChunk(content, payload)
+    }
+  }
 
   try {
     while (true) {
       const { done, value } = await reader.read()
       if (done) {
+        processBuffer(true)
         onComplete?.()
         break
       }
-      onChunk(decoder.decode(value, { stream: true }))
+
+      buffer += decoder.decode(value, { stream: true })
+      processBuffer()
     }
   } catch (err: any) {
     onError?.(err)
@@ -287,7 +356,7 @@ export async function fetchThinkingStream(
 ): Promise<void> {
   const response = await createStreamingRequest(endPoints.ai.getResults, { messageId })
 
-  await readStream(response, onChunk, onComplete, onError)
+  await readStream(response, onChunk, onComplete, onError, { streamType: 'thinking' })
 }
 
 export default apiClient

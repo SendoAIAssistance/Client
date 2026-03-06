@@ -121,19 +121,25 @@ export function useChat() {
       ])
 
       let fullResponse = ''
-      await readStream(response, (chunk) => {
-        fullResponse += chunk
+      await readStream(
+        response,
+        (chunk) => {
+          fullResponse += chunk
 
-        setMessages((prev) => {
-          const updated = [...prev]
-          const last = updated[updated.length - 1]
-          if (last?.isAI) {
-            last.message = fullResponse
-            last.updated_at = new Date()
-          }
-          return updated
-        })
-      })
+          setMessages((prev) => {
+            const updated = [...prev]
+            const last = updated[updated.length - 1]
+            if (last?.isAI) {
+              last.message = fullResponse
+              last.updated_at = new Date()
+            }
+            return updated
+          })
+        },
+        undefined,
+        undefined,
+        { streamType: 'chunk' }
+      )
 
       setMessages((prev) => {
         const updated = [...prev]
