@@ -45,11 +45,11 @@ export const routes = createBrowserRouter([
     element: <Forbidden />
   },
   {
-    path: '/404',
-    element: <NotFound />
-  },
-  {
     path: '/500',
     element: <ServerError />
+  },
+  {
+    path: '*',
+    element: <NotFound />
   }
 ])

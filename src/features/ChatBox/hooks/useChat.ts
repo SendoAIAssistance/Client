@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect } from 'react'
-import apiClient, { createStreamingRequest, readStream } from '~/lib/apiClient'
+import apiClient from '~/lib/apiClient'
 import { endPoints } from '~/lib/endPoints'
 import { MessageStatus, type Message } from '../types/chatTypes'
+import { useStreaming } from './useStreaming'
 
 export function useChat() {
   const [messages, setMessages] = useState<Message[]>([])
@@ -9,6 +10,27 @@ export function useChat() {
   const [isLoading, setIsLoading] = useState(false)
   const [conversationId, setConversationId] = useState<string>('')
   const scrollRef = useRef<HTMLDivElement>(null)
+  const thinkingStartAtRef = useRef<number>(0)
+  const { stream } = useStreaming({
+    onChunkReceived: (response, thinking, eventType) => {
+      setMessages((prev) => {
+        const updated = [...prev]
+        const last = updated[updated.length - 1]
+        if (!last?.isAI) return updated
+
+        if (eventType === 'thinking') {
+          if (thinking) {
+            last.thinking = thinking
+          }
+        } else {
+          last.message = response
+        }
+
+        last.updated_at = new Date()
+        return updated
+      })
+    }
+  })
 
   // === INIT: Load/create daily conversationId + fetch messages from API ===
   useEffect(() => {
@@ -73,8 +95,8 @@ export function useChat() {
     }
   }, [messages])
 
-  const sendMessage = async (userInput: string, files?: File[]) => {
-    if ((!userInput.trim() && (!files || files.length === 0)) || !conversationId) return
+  const sendMessage = async (userInput: string, files?: File[]): Promise<boolean> => {
+    if ((!userInput.trim() && (!files || files.length === 0)) || !conversationId) return false
 
     const userMessage: Message = {
       conversationId,
@@ -102,12 +124,10 @@ export function useChat() {
 
       setMessages((prev) => [...prev, aiMessage])
 
-      // Create FormData to send both text and files
       const formData = new FormData()
       formData.append('conversationId', conversationId)
       formData.append('message', userInput)
 
-      // Append files if they exist
       if (files && files.length > 0) {
         files.forEach((file, index) => {
           formData.append(`file_${index}`, file)
@@ -115,58 +135,44 @@ export function useChat() {
         formData.append('fileCount', files.length.toString())
       }
 
-      const [, response] = await Promise.all([
-        apiClient.post(endPoints.chat.sendMessage, userMessage),
-        createStreamingRequest(endPoints.ai.sendMessage, formData)
-      ])
+      let finalResponse = ''
+      let finalThinking = ''
+      thinkingStartAtRef.current = Date.now()
 
-      let fullResponse = ''
-      await readStream(
-        response,
-        (chunk) => {
-          fullResponse += chunk
+      await stream(endPoints.ai.sendMessage, formData, (response, thinking) => {
+        finalResponse = response
+        finalThinking = thinking
+      })
 
-          setMessages((prev) => {
-            const updated = [...prev]
-            const last = updated[updated.length - 1]
-            if (last?.isAI) {
-              last.message = fullResponse
-              last.updated_at = new Date()
-            }
-            return updated
-          })
-        },
-        undefined,
-        undefined,
-        { streamType: 'chunk' }
-      )
+      if (finalThinking) {
+        setMessages((prev) => {
+          const updated = [...prev]
+          const last = updated[updated.length - 1]
+          if (last?.isAI) {
+            last.thinking = finalThinking
+            last.thinkingDuration = Date.now() - thinkingStartAtRef.current
+          }
+          return updated
+        })
+      }
 
       setMessages((prev) => {
         const updated = [...prev]
         const last = updated[updated.length - 1]
         if (last?.isAI) {
+          last.message = finalResponse
           last.status = MessageStatus.DONE
           last.updated_at = new Date()
         }
         return updated
       })
 
-      const aiMessageToSave: Message = {
-        conversationId,
-        message: fullResponse,
-        status: MessageStatus.DONE,
-        created_at: new Date(),
-        updated_at: new Date(),
-        isAI: true
-      }
-      await apiClient.post(endPoints.chat.sendMessage, aiMessageToSave)
-
       setIsLoading(false)
-    } catch {
-      // ERROR CASE
+      return true
+    } catch (err) {
+      console.log(err)
       const errorMessage = 'System did not receive a response. Please contact technical support.'
 
-      // Reset AI message for typing error display
       setMessages((prev) => {
         const updated = [...prev]
         const last = updated[updated.length - 1]
@@ -195,7 +201,6 @@ export function useChat() {
 
           setTimeout(streamError, 30)
         } else {
-          // Finished typing error message
           setMessages((prev) => {
             const updated = [...prev]
             const last = updated[updated.length - 1]
@@ -210,6 +215,7 @@ export function useChat() {
       }
 
       setTimeout(streamError, 100)
+      return true
     }
   }
 

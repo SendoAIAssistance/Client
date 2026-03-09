@@ -15,6 +15,6 @@ export const endPoints = {
     getAIModels: '/api/ai/models',
     getAISuggestions: '/api/ai/suggestions',
     getResults: '/api/ai/results',
-    sendMessage: '/api/ai/send-message'
+    sendMessage: '/api/v1/chat'
   }
 }

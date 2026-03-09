@@ -21,12 +21,12 @@ const menuItems = [
     title: 'Chat Support',
     url: '/home/chat-support',
     icon: MessageSquare
-  },
-  {
-    title: 'Training AI',
-    url: '/home/training-ai',
-    icon: Brain
   }
+  // {
+  //   title: 'Training AI',
+  //   url: '/home/training-ai',
+  //   icon: Brain
+  // }
 ]
 
 export function AppSidebar() {

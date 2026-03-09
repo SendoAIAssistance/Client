@@ -49,8 +49,8 @@ export default function Modal({
             onDragLeave={handleDragLeave}
           >
             <div className='flex flex-col items-center justify-center gap-4'>
-              <div className='p-4 rounded-full bg-muted'>
-                <Paperclip className='h-8 w-8 text-muted-foreground' />
+              <div className='p-4 rounded-full bg-secondary/50'>
+                <Paperclip className='h-8 w-8 text-primary-foreground' />
               </div>
               <div className='text-center'>
                 <p className='text-sm font-medium mb-1'>Drop files here or click to browse</p>
@@ -58,9 +58,9 @@ export default function Modal({
               </div>
               <Input id='file-upload' type='file' multiple onChange={handleFileSelect} className='hidden' />
               <Button
-                variant='outline'
+                variant='secondary'
                 onClick={() => document.getElementById('file-upload')?.click()}
-                className='w-full'
+                className='w-full font-semibold'
               >
                 Browse Files
               </Button>
@@ -96,7 +96,7 @@ export default function Modal({
           )}
 
           <div className='flex gap-2 mt-4'>
-            <Button variant='outline' onClick={() => setIsDialogOpen(false)} className='flex-1'>
+            <Button variant='secondary' onClick={() => setIsDialogOpen(false)} className='flex-1'>
               Cancel
             </Button>
             <Button

@@ -3,7 +3,6 @@ import { ChevronDown, Loader2, AlertCircle, BotIcon } from 'lucide-react'
 import { Button } from '~/components/ui/button'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '~/components/ui/collapsible'
 import type { Message } from '../types/chatTypes'
-import { fetchThinkingStream } from '~/lib/apiClient'
 import { useAuth } from '~/app/providers/AuthProvider'
 import { FilePreview } from './FilePreview'
 
@@ -12,37 +11,9 @@ interface ChatMessageItemProps {
 }
 
 export function ChatMessageItem({ message }: ChatMessageItemProps) {
-  const [thinking, setThinking] = useState(message.thinking || '')
   const [isThinkingOpen, setIsThinkingOpen] = useState(false)
-  const [isLoadingThinking, setIsLoadingThinking] = useState(false)
-  const [thinkingError, setThinkingError] = useState<string | null>(null)
   const isAI = message.isAI ?? false
   const { user } = useAuth()
-
-  const handleLoadThinking = async () => {
-    if (thinking || isLoadingThinking) return
-
-    setIsLoadingThinking(true)
-    setThinkingError(null)
-
-    try {
-      let thinkingText = ''
-
-      await fetchThinkingStream(
-        message._id || '',
-        (chunk: string) => {
-          thinkingText += chunk
-          setThinking(thinkingText)
-        },
-        () => {
-          setIsLoadingThinking(false)
-        }
-      )
-    } catch (err: any) {
-      setThinkingError(err.message || 'Failed to load thinking')
-      setIsLoadingThinking(false)
-    }
-  }
 
   const formatThinkingDuration = () => {
     if (!message.thinkingDuration) return ''
@@ -75,44 +46,29 @@ export function ChatMessageItem({ message }: ChatMessageItemProps) {
                 variant='ghost'
                 size='sm'
                 className='h-auto px-2 py-1.5 text-xs text-muted-foreground hover:text-foreground hover:bg-muted/50'
-                onClick={!thinking && !isLoadingThinking ? handleLoadThinking : undefined}
               >
                 <ChevronDown className={`w-3 h-3 mr-1.5 transition-transform ${isThinkingOpen ? 'rotate-180' : ''}`} />
-                {isLoadingThinking ? (
-                  <>
-                    <Loader2 className='w-3 h-3 mr-1 animate-spin' />
-                    Getting thought...
-                  </>
-                ) : (
-                  <>Thought for {formatThinkingDuration()}</>
-                )}
+                <>Thought for {formatThinkingDuration()}</>
               </Button>
             </CollapsibleTrigger>
 
             <CollapsibleContent className='mt-2'>
-              {thinkingError ? (
-                <div className='flex items-start gap-2 p-3 bg-destructive/10 rounded-lg border border-destructive/20 text-left'>
-                  <AlertCircle className='w-4 h-4 text-destructive shrink-0 mt-0.5' />
-                  <p className='text-xs text-destructive'>{thinkingError}</p>
-                </div>
-              ) : (
-                <div className='p-3 bg-muted/50 rounded-lg border border-border/50 text-xs leading-relaxed text-muted-foreground whitespace-pre-wrap max-h-64 overflow-y-auto text-left'>
-                  {thinking || (
-                    <span className='text-muted-foreground/60'>
-                      {isLoadingThinking ? 'Loading...' : 'No thinking available'}
-                    </span>
-                  )}
-                </div>
-              )}
+              <div className='p-3 bg-muted/50 rounded-lg border border-border/50 text-xs leading-relaxed text-muted-foreground whitespace-pre-wrap max-h-64 overflow-y-auto text-left'>
+                {message.thinking || <span className='text-muted-foreground/60'>No thinking available</span>}
+              </div>
             </CollapsibleContent>
           </Collapsible>
         )}
 
         {/* Main message bubble */}
         <div
-          className={`px-4 py-3 rounded-lg max-w-2xl text-left ${!isAI ? 'mt-6' : ''} ${
-            isAI ? ' text-foreground rounded-tl-none' : 'bg-primary text-primary-foreground rounded-tr-none'
-          } ${message.status === 'ERROR' ? ' bg bg-destructive/25 border border-destructive' : 'bg-muted'}`}
+          className={`px-4 py-3 rounded-lg max-w-2xl text-left ${
+            !isAI ? 'mt-6' : ''
+          } ${
+            isAI ? 'bg-muted text-foreground rounded-tl-none' : 'bg-primary text-primary-foreground rounded-tr-none'
+          } ${
+            message.status === 'ERROR' ? 'bg-destructive/25 border border-destructive' : ''
+          }`}
         >
           {!isAI && message.files && message.files.length > 0 && <FilePreview files={message.files} />}
           <p className={`text-sm leading-relaxed whitespace-pre-wrap wrap-break-words`}>{message.message}</p>

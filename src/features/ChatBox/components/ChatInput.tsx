@@ -7,7 +7,7 @@ import Modal from './Modal'
 interface Props {
   inputValue: string
   setInputValue: (value: string) => void
-  onSend: (params: { message: string; files?: File[] }) => void
+  onSend: (params: { message: string; files?: File[] }) => Promise<boolean> | boolean
   isLoading: boolean
 }
 
@@ -24,9 +24,16 @@ export function ChatInput({ inputValue, setInputValue, onSend, isLoading }: Prop
     }
   }
 
-  const handleSend = () => {
-    onSend({ message: inputValue, files: selectedFiles.length > 0 ? selectedFiles : undefined })
-    setSelectedFiles([])
+  const handleSend = async () => {
+    if (!inputValue.trim() && selectedFiles.length === 0) return
+
+    const didSend = await Promise.resolve(
+      onSend({ message: inputValue, files: selectedFiles.length > 0 ? selectedFiles : undefined })
+    )
+
+    if (didSend) {
+      setSelectedFiles([])
+    }
   }
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -71,7 +78,10 @@ export function ChatInput({ inputValue, setInputValue, onSend, isLoading }: Prop
 
   useEffect(() => {
     const handleGlobalPaste = (e: ClipboardEvent) => {
-      if (isDialogOpen && document.activeElement !== inputRef.current) return
+      const activeElement = document.activeElement
+      const isInputFocused = activeElement === inputRef.current
+      const isChatActive = isInputFocused || isDialogOpen
+      if (!isChatActive) return
 
       const items = e.clipboardData
       if (!items) return
@@ -148,13 +158,13 @@ export function ChatInput({ inputValue, setInputValue, onSend, isLoading }: Prop
 
         <div className='flex gap-3'>
           <Button
-            variant='outline'
+            variant='secondary'
             size='icon'
             className='h-12 w-12 border-2'
             onClick={() => setIsDialogOpen(true)}
             disabled={isLoading}
           >
-            <Paperclip className='h-5 w-5' />
+            <Paperclip className='h-5 w-5 text-primary' />
           </Button>
           <Input
             ref={inputRef}
