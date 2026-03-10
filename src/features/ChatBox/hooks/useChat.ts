@@ -72,8 +72,7 @@ export function useChat() {
         })
         const chatMessages = res?.data?.data || []
         setMessages(chatMessages)
-      } catch (err) {
-        console.error('Failed to load messages:', err)
+      } catch {
         setMessages([])
       }
       setMessages([])
@@ -149,6 +148,9 @@ export function useChat() {
         apiClient.post(endPoints.chat.sendMessage, formData)
       ])
 
+      // Track end-to-end request time on client since backend doesn't return thinkingDuration.
+      const thinkingDuration = Math.max(0, Math.round(performance.now() - requestStartAtRef.current))
+
       setMessages((prev) => {
         const updated = [...prev]
         const last = updated[updated.length - 1]
@@ -157,11 +159,7 @@ export function useChat() {
             last.thinking = finalThinking
           }
 
-          // Track end-to-end request time on client since backend doesn't return thinkingDuration.
-          const duration = Math.max(0, Math.round(performance.now() - requestStartAtRef.current))
-          if (duration > 0) {
-            last.thinkingDuration = duration
-          }
+          if (thinkingDuration > 0) last.thinkingDuration = thinkingDuration
         }
         return updated
       })
@@ -177,8 +175,17 @@ export function useChat() {
         return updated
       })
 
-      apiClient.post(endPoints.chat.sendMessage, messages[messages.length - 1])
-      console.log(messages[messages.length - 1])
+      // Persist final AI message to backend after streaming finishes.
+      await apiClient.post(endPoints.chat.sendMessage, {
+        conversationId,
+        message: finalResponse,
+        status: MessageStatus.DONE,
+        thinking: finalThinking || undefined,
+        thinkingDuration: thinkingDuration || undefined,
+        isAI: true,
+        created_at: new Date(),
+        updated_at: new Date()
+      } satisfies Message)
 
       setIsLoading(false)
       return true
