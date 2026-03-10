@@ -1,8 +1,8 @@
 import { useState, useRef, useEffect } from 'react'
-import apiClient from '~/lib/apiClient'
 import { endPoints } from '~/lib/endPoints'
 import { MessageStatus, type Message } from '../types/chatTypes'
 import { useStreaming } from './useStreaming'
+import apiClient from '~/lib/apiClient'
 
 export function useChat() {
   const [messages, setMessages] = useState<Message[]>([])
@@ -10,7 +10,7 @@ export function useChat() {
   const [isLoading, setIsLoading] = useState(false)
   const [conversationId, setConversationId] = useState<string>('')
   const scrollRef = useRef<HTMLDivElement>(null)
-  const thinkingStartAtRef = useRef<number>(0)
+  const requestStartAtRef = useRef<number>(0)
   const { stream } = useStreaming({
     onChunkReceived: (response, thinking, eventType) => {
       setMessages((prev) => {
@@ -66,6 +66,7 @@ export function useChat() {
 
       // Fetch messages from API
       try {
+        //'/api/chat?conversationId=xxx'
         const res = await apiClient.get(endPoints.chat.getChatHistory, {
           params: { conversationId: convId }
         })
@@ -75,6 +76,7 @@ export function useChat() {
         console.error('Failed to load messages:', err)
         setMessages([])
       }
+      setMessages([])
     }
 
     initConversation()
@@ -137,24 +139,32 @@ export function useChat() {
 
       let finalResponse = ''
       let finalThinking = ''
-      thinkingStartAtRef.current = Date.now()
+      requestStartAtRef.current = performance.now()
 
-      await stream(endPoints.ai.sendMessage, formData, (response, thinking) => {
-        finalResponse = response
-        finalThinking = thinking
-      })
+      await Promise.all([
+        stream(endPoints.ai.sendMessage, formData, (response, thinking) => {
+          finalResponse = response
+          finalThinking = thinking
+        }),
+        apiClient.post(endPoints.chat.sendMessage, formData)
+      ])
 
-      if (finalThinking) {
-        setMessages((prev) => {
-          const updated = [...prev]
-          const last = updated[updated.length - 1]
-          if (last?.isAI) {
+      setMessages((prev) => {
+        const updated = [...prev]
+        const last = updated[updated.length - 1]
+        if (last?.isAI) {
+          if (finalThinking) {
             last.thinking = finalThinking
-            last.thinkingDuration = Date.now() - thinkingStartAtRef.current
           }
-          return updated
-        })
-      }
+
+          // Track end-to-end request time on client since backend doesn't return thinkingDuration.
+          const duration = Math.max(0, Math.round(performance.now() - requestStartAtRef.current))
+          if (duration > 0) {
+            last.thinkingDuration = duration
+          }
+        }
+        return updated
+      })
 
       setMessages((prev) => {
         const updated = [...prev]
@@ -166,6 +176,9 @@ export function useChat() {
         }
         return updated
       })
+
+      apiClient.post(endPoints.chat.sendMessage, messages[messages.length - 1])
+      console.log(messages[messages.length - 1])
 
       setIsLoading(false)
       return true

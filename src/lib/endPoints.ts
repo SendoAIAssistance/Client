@@ -1,7 +1,7 @@
 export const endPoints = {
   chat: {
-    getChatHistory: '/api/chat/history',
-    sendMessage: '/api/chat/send-message',
+    getChatHistory: '/api/chat',
+    sendMessage: '/api/chat/message',
     getMessage: '/api/chat/message'
   },
   auth: {

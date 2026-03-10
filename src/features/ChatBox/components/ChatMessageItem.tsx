@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { ChevronDown, Loader2, AlertCircle, BotIcon } from 'lucide-react'
 import { Button } from '~/components/ui/button'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '~/components/ui/collapsible'
@@ -12,15 +12,40 @@ interface ChatMessageItemProps {
 
 export function ChatMessageItem({ message }: ChatMessageItemProps) {
   const [isThinkingOpen, setIsThinkingOpen] = useState(false)
+  const thinkingContentRef = useRef<HTMLDivElement>(null)
   const isAI = message.isAI ?? false
   const { user } = useAuth()
 
-  const formatThinkingDuration = () => {
-    if (!message.thinkingDuration) return ''
-    if (message.thinkingDuration < 1000) {
-      return `${message.thinkingDuration}ms`
+  useEffect(() => {
+    if (!isAI || !isThinkingOpen || !thinkingContentRef.current) return
+
+    // Keep the latest streamed reasoning visible.
+    const el = thinkingContentRef.current
+    el.scrollTop = el.scrollHeight
+  }, [message.thinking, isThinkingOpen, isAI])
+
+  const getThinkingDuration = () => {
+    if (typeof message.thinkingDuration === 'number' && message.thinkingDuration > 0) {
+      return message.thinkingDuration
     }
-    return `${(message.thinkingDuration / 1000).toFixed(1)}s`
+
+    if (message.created_at && message.updated_at) {
+      const created = new Date(message.created_at).getTime()
+      const updated = new Date(message.updated_at).getTime()
+      const delta = updated - created
+      return delta > 0 ? delta : 0
+    }
+
+    return 0
+  }
+
+  const formatThinkingDuration = () => {
+    const duration = getThinkingDuration()
+    if (!duration) return ''
+    if (duration < 1000) {
+      return `${duration}ms`
+    }
+    return `${(duration / 1000).toFixed(1)}s`
   }
 
   return (
@@ -53,7 +78,10 @@ export function ChatMessageItem({ message }: ChatMessageItemProps) {
             </CollapsibleTrigger>
 
             <CollapsibleContent className='mt-2'>
-              <div className='p-3 bg-muted/50 rounded-lg border border-border/50 text-xs leading-relaxed text-muted-foreground whitespace-pre-wrap max-h-64 overflow-y-auto text-left'>
+              <div
+                ref={thinkingContentRef}
+                className='p-3 bg-muted/50 rounded-lg border border-border/50 text-xs leading-relaxed text-muted-foreground whitespace-pre-wrap max-h-64 overflow-y-auto text-left'
+              >
                 {message.thinking || <span className='text-muted-foreground/60'>No thinking available</span>}
               </div>
             </CollapsibleContent>
@@ -62,13 +90,9 @@ export function ChatMessageItem({ message }: ChatMessageItemProps) {
 
         {/* Main message bubble */}
         <div
-          className={`px-4 py-3 rounded-lg max-w-2xl text-left ${
-            !isAI ? 'mt-6' : ''
-          } ${
+          className={`px-4 py-3 rounded-lg max-w-2xl text-left ${!isAI ? 'mt-6' : ''} ${
             isAI ? 'bg-muted text-foreground rounded-tl-none' : 'bg-primary text-primary-foreground rounded-tr-none'
-          } ${
-            message.status === 'ERROR' ? 'bg-destructive/25 border border-destructive' : ''
-          }`}
+          } ${message.status === 'ERROR' ? 'bg-destructive/25 border border-destructive' : ''}`}
         >
           {!isAI && message.files && message.files.length > 0 && <FilePreview files={message.files} />}
           <p className={`text-sm leading-relaxed whitespace-pre-wrap wrap-break-words`}>{message.message}</p>

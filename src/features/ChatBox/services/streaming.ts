@@ -26,17 +26,22 @@ interface StreamChunkHandler {
 
 const parseSseDataLine = (line: string): StreamEventPayload | null => {
   const trimmed = line.trim()
-  if (!trimmed.startsWith('data:')) return null
+  if (!trimmed) return null
 
-  const raw = trimmed.slice(5).trim()
-  if (!raw || raw === '[DONE]') return null
+  // Support standard SSE frames: `data: ...`
+  const raw = trimmed.startsWith('data:') ? trimmed.slice(5).trim() : trimmed
 
+  // Ignore common terminators / keep-alives
+  if (!raw || raw === '[DONE]' || raw === 'DONE') return null
+
+  // Many servers send JSON per line (with or without `data:`)
   try {
     const parsed = JSON.parse(raw)
     if (parsed && typeof parsed === 'object') {
       return parsed as StreamEventPayload
     }
   } catch {
+    // Fallback: treat as plain text content
     return {
       type: 'chunk',
       content: raw,
@@ -65,10 +70,12 @@ export async function createStreamingRequest(
   options?: { signal?: AbortSignal; onError?: (err: Error) => void }
 ): Promise<Response> {
   const token = localStorage.getItem('access_token')
-  const fullUrl = `${env.apiBaseUrl}${url.startsWith('/') ? url : '/' + url}`
+  const streamingBase = env.streamingAiBaseUrl || env.apiBaseUrl
+  const fullUrl = `${streamingBase}${url.startsWith('/') ? url : '/' + url}`
 
   const isFormData = data instanceof FormData
   const headers: HeadersInit = {
+    Accept: 'text/event-stream',
     ...(token && { Authorization: `Bearer ${token}` }),
     ...(isFormData ? {} : { 'Content-Type': 'application/json' })
   }
