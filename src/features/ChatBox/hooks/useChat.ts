@@ -226,17 +226,17 @@ export function useChat() {
       }
 
       setTimeout(streamError, 100)
-    } finally {
-      await apiClient.post(endPoints.chat.sendMessage, {
-        conversationId,
-        message: finalResponse,
-        status: MessageStatus.DONE,
-        isAI: true,
-        created_at: new Date(),
-        updated_at: new Date()
-      } satisfies Message)
-      setIsLoading(false)
     }
+    await apiClient.post(endPoints.chat.sendMessage, {
+      conversationId,
+      message: finalResponse,
+      status: MessageStatus.DONE,
+      isAI: true,
+      created_at: new Date(),
+      updated_at: new Date()
+    } satisfies Message)
+    setIsLoading(false)
+
     return true
   }
 

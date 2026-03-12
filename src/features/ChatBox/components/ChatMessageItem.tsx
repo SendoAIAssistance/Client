@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { ChevronDown, Loader2, AlertCircle, BotIcon } from 'lucide-react'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 import { Button } from '~/components/ui/button'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '~/components/ui/collapsible'
 import type { Message } from '../types/chatTypes'
@@ -95,7 +97,44 @@ export function ChatMessageItem({ message }: ChatMessageItemProps) {
           } ${message.status === 'ERROR' ? 'bg-destructive/25 border border-destructive' : ''}`}
         >
           {!isAI && message.files && message.files.length > 0 && <FilePreview files={message.files} />}
-          <p className={`text-sm leading-relaxed whitespace-pre-wrap wrap-break-words`}>{message.message}</p>
+          <div className='text-sm leading-relaxed prose prose-sm max-w-none'>
+            <ReactMarkdown
+              remarkPlugins={[remarkGfm]}
+              components={{
+                p: ({ children }) => <p className='mb-2 last:mb-0'>{children}</p>,
+                code: ({ inline, children }: { inline?: boolean; children?: React.ReactNode }) =>
+                  inline ? (
+                    <code className='px-1 py-0.5 bg-muted rounded text-xs font-mono'>{children}</code>
+                  ) : (
+                    <pre className='p-3 bg-muted rounded-lg text-xs overflow-x-auto my-2'>
+                      <code>{children}</code>
+                    </pre>
+                  ),
+                ul: ({ children }) => <ul className='list-disc pl-4 mb-2 space-y-1'>{children}</ul>,
+                ol: ({ children }) => <ol className='list-decimal pl-4 mb-2 space-y-1'>{children}</ol>,
+                h1: ({ children }) => <h1 className='text-base font-bold mb-2'>{children}</h1>,
+                h2: ({ children }) => <h2 className='text-sm font-bold mb-1'>{children}</h2>,
+                h3: ({ children }) => <h3 className='text-sm font-semibold mb-1'>{children}</h3>,
+                blockquote: ({ children }) => (
+                  <blockquote className='border-l-2 border-muted-foreground/30 pl-3 italic text-muted-foreground my-2'>
+                    {children}
+                  </blockquote>
+                ),
+                a: ({ href, children }) => (
+                  <a
+                    href={href}
+                    target='_blank'
+                    rel='noopener noreferrer'
+                    className='text-primary underline hover:opacity-80'
+                  >
+                    {children}
+                  </a>
+                )
+              }}
+            >
+              {message.message}
+            </ReactMarkdown>
+          </div>
         </div>
 
         {/* Status indicator */}
