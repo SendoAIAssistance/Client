@@ -116,6 +116,8 @@ export function useChat() {
     setInputValue('')
     setIsLoading(true)
 
+    let finalResponse = ''
+    let finalThinking = ''
     try {
       const aiMessage: Message = {
         conversationId,
@@ -139,8 +141,6 @@ export function useChat() {
         formData.append('fileCount', files.length.toString())
       }
 
-      let finalResponse = ''
-      let finalThinking = ''
       requestStartAtRef.current = performance.now()
 
       await Promise.all([
@@ -177,21 +177,6 @@ export function useChat() {
         }
         return updated
       })
-
-      // Persist final AI message to backend after streaming finishes.
-      await apiClient.post(endPoints.chat.sendMessage, {
-        conversationId,
-        message: finalResponse,
-        status: MessageStatus.DONE,
-        thinking: finalThinking || undefined,
-        thinkingDuration: thinkingDuration || undefined,
-        isAI: true,
-        created_at: new Date(),
-        updated_at: new Date()
-      } satisfies Message)
-
-      setIsLoading(false)
-      return true
     } catch (err) {
       console.log(err)
       const errorMessage =
@@ -241,8 +226,18 @@ export function useChat() {
       }
 
       setTimeout(streamError, 100)
-      return true
+    } finally {
+      await apiClient.post(endPoints.chat.sendMessage, {
+        conversationId,
+        message: finalResponse,
+        status: MessageStatus.DONE,
+        isAI: true,
+        created_at: new Date(),
+        updated_at: new Date()
+      } satisfies Message)
+      setIsLoading(false)
     }
+    return true
   }
 
   return {
