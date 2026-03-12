@@ -227,14 +227,15 @@ export function useChat() {
 
       setTimeout(streamError, 100)
     }
-    await apiClient.post(endPoints.chat.sendMessage, {
-      conversationId,
-      message: finalResponse,
-      status: MessageStatus.DONE,
-      isAI: true,
-      created_at: new Date(),
-      updated_at: new Date()
-    } satisfies Message)
+    const aiFormData = new FormData()
+    aiFormData.append('conversationId', conversationId)
+    aiFormData.append('message', finalResponse)
+    aiFormData.append('status', String(MessageStatus.DONE))
+    aiFormData.append('isAI', 'true')
+    aiFormData.append('created_at', new Date().toISOString())
+    aiFormData.append('updated_at', new Date().toISOString())
+
+    await apiClient.post(endPoints.chat.sendMessage, aiFormData)
     setIsLoading(false)
 
     return true
