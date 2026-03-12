@@ -1,7 +1,13 @@
 import { env } from '~/lib/env'
 import { Button } from '~/components/ui/button'
+import { useEffect } from 'react'
+import { useAuth } from '~/app/providers/AuthProvider'
+import { useNavigate } from 'react-router'
 
 export default function Login() {
+  const navigate = useNavigate()
+  const { user, loading } = useAuth()
+
   const rootUrl = 'https://accounts.google.com/o/oauth2/v2/auth'
   const options = {
     redirect_uri: env.googleAuthorizedRedirectUri,
@@ -15,6 +21,12 @@ export default function Login() {
   }
   const qs = new URLSearchParams(options).toString()
   const authorizationUrl = `${rootUrl}?${qs}`
+
+  useEffect(() => {
+    if (!loading && user) {
+      navigate('/home', { replace: true })
+    }
+  }, [loading, user, navigate])
 
   const handleLogin = () => {
     window.location.href = authorizationUrl
