@@ -1,28 +1,12 @@
 import { toast } from 'sonner'
 import { env } from '~/lib/env'
-
-export type StreamMessageType = 'chunk' | 'thinking'
-
-export interface StreamEventPayload {
-  type?: StreamMessageType | string
-  content?: string
-  status?: string
-  [key: string]: unknown
-}
-
-interface ReadStreamOptions {
-  streamType?: StreamMessageType | 'all'
-}
-
-interface StreamOptions {
-  signal?: AbortSignal
-}
-
-interface StreamChunkHandler {
-  onChunk?: (chunk: string, event?: StreamEventPayload) => void
-  onThinking?: (chunk: string, fullThinking: string) => void
-  onMessage?: (chunk: string, fullResponse: string) => void
-}
+import type {
+  ReadStreamOptions,
+  StreamChunkHandler,
+  StreamEventPayload,
+  StreamMessageType,
+  StreamOptions
+} from '../types/streamTypes'
 
 const parseSseDataLine = (line: string): StreamEventPayload | null => {
   const trimmed = line.trim()

@@ -66,14 +66,14 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
         apiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`
         const res = await apiClient.get(endPoints.auth.me)
 
-        if (!res?.data?.user || res?.data?.success === false) {
+        if (!res?.data || res?.data?.success === false) {
           logout()
           return
         }
 
-        const { _id, email, name } = res.data.user
+        const { id, email, name } = res.data
         const userData = {
-          id: _id,
+          id,
           email,
           name
         }
@@ -156,7 +156,7 @@ export function useRequireAuth() {
 
   useEffect(() => {
     if (!context.loading && !context.user) {
-      toastUtils.error(navigate, 'You have to login to access this page.', '/')
+      toastUtils.error(navigate, 'Bạn cần đăng nhập để truy cập trang này.', '/')
     }
   }, [context.user, navigate, context.loading])
 

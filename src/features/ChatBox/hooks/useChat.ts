@@ -4,6 +4,9 @@ import { MessageStatus, type Message } from '../types/chatTypes'
 import { useStreaming } from './useStreaming'
 import apiClient from '~/lib/apiClient'
 
+const STREAM_TIMEOUT_ERROR_MESSAGE = 'AI response timed out after 60 seconds.'
+const DEFAULT_STREAM_ERROR_MESSAGE = 'System did not receive a response. Please contact technical support.'
+
 export function useChat() {
   const [messages, setMessages] = useState<Message[]>([])
   const [inputValue, setInputValue] = useState('')
@@ -191,7 +194,10 @@ export function useChat() {
       return true
     } catch (err) {
       console.log(err)
-      const errorMessage = 'System did not receive a response. Please contact technical support.'
+      const errorMessage =
+        err instanceof Error && err.message === STREAM_TIMEOUT_ERROR_MESSAGE
+          ? 'AI did not respond within 60 seconds. Please try again.'
+          : DEFAULT_STREAM_ERROR_MESSAGE
 
       setMessages((prev) => {
         const updated = [...prev]
